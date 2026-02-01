@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mia Kingtide's Ocean Speed Match</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="img/Octopus.svg">
+    
+    <!-- Apple Touch Icon (for iOS homescreen) -->
+    <link rel="apple-touch-icon" href="img/Octopus.svg">
+    
+    <!-- Web App Manifest for Android/PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Speed Match">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #d1fae5 0%, #6ee7b7 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Card styles */
+        .game-card {
+            width: 140px;
+            height: 140px;
+            border-radius: 1rem;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #0ea5e9;
+            transition: transform 0.15s, box-shadow 0.15s;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-card:active {
+            transform: scale(0.95);
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Correct/Wrong animations */
+        @keyframes correct-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 30px 15px rgba(34, 197, 94, 0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        @keyframes wrong-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+
+        .card-correct {
+            animation: correct-pulse 0.5s ease-out;
+            border-color: #22c55e !important;
+        }
+
+        .card-wrong {
+            animation: wrong-shake 0.5s ease-out;
+            border-color: #ef4444 !important;
+        }
+
+        /* Timer bar */
+        .timer-bar {
+            height: 12px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e);
+            transition: width 0.1s linear;
+        }
+
+        .timer-fill.warning {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .timer-fill.danger {
+            background: #ef4444;
+        }
+
+        /* Streak counter */
+        @keyframes streak-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .streak-pop {
+            animation: streak-pop 0.3s ease-out;
+        }
+
+        /* Background bubbles */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            background-color: rgba(255, 255, 255, 0.4);
+            animation: rise 15s infinite ease-in;
+            bottom: -100px;
+        }
+
+        @keyframes rise {
+            0% { bottom: -100px; transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { bottom: 100vh; transform: translateX(-200px); }
+        }
+
+        /* Match/No Match buttons */
+        .action-btn {
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+            min-width: 140px;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-match {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-nomatch {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Countdown overlay */
+        .countdown-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .countdown-number {
+            font-size: 8rem;
+            font-weight: bold;
+            color: white;
+            animation: countdown-pop 1s ease-out;
+        }
+
+        @keyframes countdown-pop {
+            0% { transform: scale(2); opacity: 0; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall 3s ease-out forwards;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .game-card, .action-btn, .timer-fill, .bubble, .confetti {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden relative">
+
+    <!-- Background Bubbles -->
+    <div id="bubbles-container" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+    <div class="container mx-auto px-4 py-4 md:py-8 max-w-2xl flex flex-col items-center min-h-screen">
+        
+        <!-- Header -->
+        <header class="text-center mb-6 w-full">
+            <h1 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-2 drop-shadow-sm">
+                <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="hover:text-emerald-700 underline decoration-2 underline-offset-4 transition-colors">Mia Kingtide's</a>
+                <span class="block text-xl md:text-2xl text-emerald-700 mt-1">Ocean Speed Match</span>
+            </h1>
+            <p class="text-emerald-800 text-sm">Do the two cards show the same creature? React fast!</p>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="flex flex-wrap justify-center gap-4 mb-4 w-full">
+            <!-- Score -->
+            <div class="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm text-emerald-900 font-bold border border-emerald-200">
+                Score: <span id="score">0</span>
+            </div>
+
+            <!-- Streak -->
+            <div class="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm text-emerald-900 font-bold border border-emerald-200">
+                🔥 Streak: <span id="streak">0</span>
+            </div>
+
+            <!-- Round -->
+            <div class="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm text-emerald-900 font-bold border border-emerald-200">
+                Round: <span id="round">1</span>/<span id="total-rounds">20</span>
+            </div>
+        </div>
+
+        <!-- Timer Bar -->
+        <div class="w-full max-w-md mb-6">
+            <div class="timer-bar">
+                <div id="timer-fill" class="timer-fill" style="width: 100%"></div>
+            </div>
+            <p class="text-xs text-emerald-700 mt-1 text-center">Time remaining</p>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="flex flex-col items-center gap-6 mb-6">
+            <!-- Cards -->
+            <div class="flex gap-4 md:gap-8 items-center justify-center">
+                <div id="card-left" class="game-card">
+                    <img src="img/Octopus.svg" alt="Left card" />
+                </div>
+                <div class="text-4xl font-bold text-emerald-600">VS</div>
+                <div id="card-right" class="game-card">
+                    <img src="img/Octopus.svg" alt="Right card" />
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button id="btn-nomatch" onclick="makeChoice(false)" class="action-btn btn-nomatch">
+                    ✗ Different
+                </button>
+                <button id="btn-match" onclick="makeChoice(true)" class="action-btn btn-match">
+                    ✓ Same
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex flex-wrap gap-4 justify-center mt-4">
+            <a href="https://pitterpatterdiving.com" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                Home
+            </a>
+            <a href="index.html" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                Memory Match
+            </a>
+            <button onclick="startGame()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                Restart
+            </button>
+            <button onclick="shareGame()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                Share
+            </button>
+        </div>
+
+        <!-- Best Score -->
+        <div id="best-score-display" class="text-emerald-700 text-sm text-center mt-4 hidden">
+            <span class="font-bold">Best Score:</span> <span id="best-score">0</span>
+        </div>
+    </div>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+        <div id="countdown-number" class="countdown-number">3</div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameover-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-emerald-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-emerald-400"></div>
+            
+            <h2 class="text-3xl font-display font-bold text-emerald-900 mb-2 mt-4">Game Over!</h2>
+            <p class="text-emerald-600 font-bold text-lg mb-6">Great reflexes!</p>
+            
+            <!-- Results -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-emerald-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-emerald-600 font-bold">Final Score</p>
+                    <p id="final-score" class="text-2xl font-bold text-emerald-900">0</p>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-emerald-600 font-bold">Best Streak</p>
+                    <p id="final-streak" class="text-2xl font-bold text-emerald-900">0</p>
+                </div>
+            </div>
+
+            <div class="bg-emerald-50 p-3 rounded-xl mb-6">
+                <p class="text-xs uppercase tracking-wider text-emerald-600 font-bold">Accuracy</p>
+                <p id="final-accuracy" class="text-2xl font-bold text-emerald-900">0%</p>
+            </div>
+
+            <div id="new-best" class="text-green-600 font-bold mb-4 hidden">🎉 NEW HIGH SCORE! 🎉</div>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex-1">
+                    Play Again
+                </button>
+                <button onclick="shareScore()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95">
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const CONFIG = {
+            totalImages: 20,
+            totalRounds: 20,
+            baseTime: 3000,      // Starting time per round (ms)
+            minTime: 1200,       // Minimum time per round
+            timeDecrease: 80,    // Time decrease per round
+            matchChance: 0.5,    // 50% chance of match
+            correctPoints: 100,
+            streakBonus: 25,     // Extra points per streak level
+            wrongPenalty: 50
+        };
+
+        // --- Game State ---
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let round = 1;
+        let correctAnswers = 0;
+        let currentMatch = false;
+        let timerInterval = null;
+        let timeRemaining = CONFIG.baseTime;
+        let gameActive = false;
+
+        // --- Sound Effects ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.15, now);
+
+            switch(type) {
+                case 'correct':
+                    osc.frequency.setValueAtTime(523, now);
+                    osc.frequency.setValueAtTime(659, now + 0.1);
+                    osc.frequency.setValueAtTime(784, now + 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                    break;
+                case 'wrong':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                    break;
+                case 'tick':
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                    break;
+                case 'win':
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + i * 0.15);
+                        g.gain.setValueAtTime(0.15, now + i * 0.15);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.3);
+                        o.start(now + i * 0.15);
+                        o.stop(now + i * 0.15 + 0.3);
+                    });
+                    break;
+            }
+        }
+
+        // --- Game Functions ---
+        function getRandomImage() {
+            const num = Math.floor(Math.random() * CONFIG.totalImages) + 1;
+            return `img/${num}.webp`;
+        }
+
+        function setupRound() {
+            if (round > CONFIG.totalRounds) {
+                endGame();
+                return;
+            }
+
+            // Decide if this round is a match
+            currentMatch = Math.random() < CONFIG.matchChance;
+
+            const leftCard = document.getElementById('card-left');
+            const rightCard = document.getElementById('card-right');
+
+            // Clear previous states
+            leftCard.classList.remove('card-correct', 'card-wrong');
+            rightCard.classList.remove('card-correct', 'card-wrong');
+
+            // Set images
+            const img1 = getRandomImage();
+            let img2;
+            
+            if (currentMatch) {
+                img2 = img1; // Same image
+            } else {
+                // Different image - make sure it's actually different
+                do {
+                    img2 = getRandomImage();
+                } while (img2 === img1);
+            }
+
+            leftCard.querySelector('img').src = img1;
+            rightCard.querySelector('img').src = img2;
+
+            // Update round display
+            document.getElementById('round').textContent = round;
+
+            // Calculate time for this round
+            timeRemaining = Math.max(
+                CONFIG.minTime,
+                CONFIG.baseTime - (round - 1) * CONFIG.timeDecrease
+            );
+
+            // Start timer
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerFill = document.getElementById('timer-fill');
+            const startTime = timeRemaining;
+            const startTimestamp = Date.now();
+
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                const elapsed = Date.now() - startTimestamp;
+                timeRemaining = Math.max(0, startTime - elapsed);
+                
+                const percent = (timeRemaining / startTime) * 100;
+                timerFill.style.width = `${percent}%`;
+
+                // Update timer bar color
+                timerFill.classList.remove('warning', 'danger');
+                if (percent < 30) {
+                    timerFill.classList.add('danger');
+                } else if (percent < 50) {
+                    timerFill.classList.add('warning');
+                }
+
+                // Time's up!
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 50);
+        }
+
+        function handleTimeout() {
+            // Treat timeout as wrong answer
+            playSound('wrong');
+            streak = 0;
+            score = Math.max(0, score - CONFIG.wrongPenalty);
+            
+            updateDisplay();
+            showFeedback(false);
+            
+            setTimeout(() => {
+                round++;
+                setupRound();
+            }, 800);
+        }
+
+        function makeChoice(playerSaysMatch) {
+            if (!gameActive) return;
+
+            clearInterval(timerInterval);
+            
+            const isCorrect = playerSaysMatch === currentMatch;
+
+            if (isCorrect) {
+                playSound('correct');
+                streak++;
+                bestStreak = Math.max(bestStreak, streak);
+                correctAnswers++;
+                
+                // Calculate points with streak bonus
+                const points = CONFIG.correctPoints + (streak * CONFIG.streakBonus);
+                score += points;
+                
+                // Animate streak
+                const streakEl = document.getElementById('streak');
+                streakEl.classList.add('streak-pop');
+                setTimeout(() => streakEl.classList.remove('streak-pop'), 300);
+            } else {
+                playSound('wrong');
+                streak = 0;
+                score = Math.max(0, score - CONFIG.wrongPenalty);
+            }
+
+            updateDisplay();
+            showFeedback(isCorrect);
+
+            setTimeout(() => {
+                round++;
+                setupRound();
+            }, 800);
+        }
+
+        function showFeedback(isCorrect) {
+            const leftCard = document.getElementById('card-left');
+            const rightCard = document.getElementById('card-right');
+
+            if (isCorrect) {
+                leftCard.classList.add('card-correct');
+                rightCard.classList.add('card-correct');
+            } else {
+                leftCard.classList.add('card-wrong');
+                rightCard.classList.add('card-wrong');
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+
+        function startGame() {
+            initAudio();
+            
+            // Reset state
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            round = 1;
+            correctAnswers = 0;
+            gameActive = false;
+
+            updateDisplay();
+            document.getElementById('gameover-modal').classList.add('hidden');
+
+            // Show countdown
+            showCountdown();
+        }
+
+        function showCountdown() {
+            const overlay = document.getElementById('countdown-overlay');
+            const numberEl = document.getElementById('countdown-number');
+            
+            overlay.classList.remove('hidden');
+            
+            let count = 3;
+            numberEl.textContent = count;
+            
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    numberEl.textContent = count;
+                    numberEl.style.animation = 'none';
+                    numberEl.offsetHeight; // Trigger reflow
+                    numberEl.style.animation = 'countdown-pop 1s ease-out';
+                } else {
+                    clearInterval(countInterval);
+                    overlay.classList.add('hidden');
+                    gameActive = true;
+                    setupRound();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+
+            // Check for new best
+            const isNewBest = saveBestScore(score);
+            loadBestScore();
+
+            // Show results
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-streak').textContent = bestStreak;
+            
+            const accuracy = CONFIG.totalRounds > 0 
+                ? Math.round((correctAnswers / CONFIG.totalRounds) * 100) 
+                : 0;
+            document.getElementById('final-accuracy').textContent = `${accuracy}%`;
+
+            document.getElementById('new-best').classList.toggle('hidden', !isNewBest);
+            document.getElementById('gameover-modal').classList.remove('hidden');
+
+            if (isNewBest) {
+                playSound('win');
+                fireConfetti();
+            }
+        }
+
+        // --- Local Storage ---
+        function saveBestScore(newScore) {
+            const key = 'mia-speedmatch-best';
+            const existing = localStorage.getItem(key);
+            
+            if (!existing || newScore > parseInt(existing)) {
+                localStorage.setItem(key, newScore.toString());
+                return true;
+            }
+            return false;
+        }
+
+        function loadBestScore() {
+            const key = 'mia-speedmatch-best';
+            const best = localStorage.getItem(key);
+            const display = document.getElementById('best-score-display');
+            
+            if (best) {
+                document.getElementById('best-score').textContent = best;
+                display.classList.remove('hidden');
+            } else {
+                display.classList.add('hidden');
+            }
+        }
+
+        // --- Share Functions ---
+        const booksUrl = 'https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK';
+
+        function shareGame() {
+            const gameUrl = window.location.href.split('?')[0];
+            const text = `🐙 Mia's Ocean Speed Match 🐙\nTest your reflexes with ocean creatures!\nCan you beat my score?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Ocean Speed Match", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+
+        function shareScore() {
+            const gameUrl = window.location.href.split('?')[0];
+            const accuracy = Math.round((correctAnswers / CONFIG.totalRounds) * 100);
+            const text = `🐙 Mia's Ocean Speed Match 🐙\n🏆 Score: ${score}\n🔥 Best Streak: ${bestStreak}\n🎯 Accuracy: ${accuracy}%\nCan you beat my score?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Ocean Speed Match", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Score copied to clipboard!');
+                });
+            }
+        }
+
+        // --- Visual Effects ---
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for (let i = 0; i < 12; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                const size = Math.random() * 50 + 20;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                bubble.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(bubble);
+            }
+        }
+
+        function fireConfetti() {
+            const colors = ['#f59e0b', '#ef4444', '#22c55e', '#0ea5e9'];
+            
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                const size = Math.random() * 10 + 5;
+                
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = '-20px';
+                confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }
+        }
+
+        // --- Keyboard Controls ---
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                makeChoice(false); // Different
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                makeChoice(true); // Same
+            }
+        });
+
+        // --- Initialize ---
+        window.onload = () => {
+            createBubbles();
+            loadBestScore();
+            startGame();
+        };
+    </script>
+</body>
+</html>
