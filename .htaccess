@@ -1,7 +1,7 @@
-DirectoryIndex index.htm index.html
+DirectoryIndex index.html index.htm
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteBase /oceanmatch/
-RewriteRule ^$ index.htm [L]
+RewriteRule ^$ index.html [L]
 </IfModule>
