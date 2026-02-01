@@ -1,0 +1,17 @@
+{
+  "name": "Mia Kingtide's Ocean Memory Match",
+  "short_name": "Ocean Match",
+  "description": "A fun memory matching game featuring ocean creatures from the Mia Kingtide book series",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#e0f7fa",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "img/Octopus.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
