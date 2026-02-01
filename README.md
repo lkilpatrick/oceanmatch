@@ -1,10 +1,22 @@
-# Mia Kingtide's Ocean Memory Match 🐙
+# Mia Kingtide's Ocean Games 🐙
 
-A beautiful ocean-themed memory matching game with 3D card animations, multiple difficulty levels, and engaging gameplay features.
+A collection of beautiful ocean-themed games featuring characters from the Mia Kingtide book series. Includes Memory Match and Speed Match games with engaging animations and gameplay.
+
+## 🎮 Games
+
+### Ocean Memory Match (`index.html`)
+A classic memory matching game with 3D card animations, multiple difficulty levels, and engaging gameplay features.
+
+### Ocean Speed Match (`speedmatch.html`)
+A fast-paced reaction game where you quickly decide if two cards show the same ocean creature. Features:
+- **20 Rounds**: Race against the clock each round
+- **Streak Bonuses**: Build combos for higher scores
+- **Accuracy Tracking**: See how well you performed
+- **Best Score Persistence**: Beat your high score
 
 ## 🎮 Features
 
-### Core Gameplay
+### Memory Match Features
 - **Memory Matching**: Classic card-matching gameplay with ocean creature images
 - **3D Card Animations**: Smooth flip animations with perspective effects
 - **Multiple Difficulty Levels**:
@@ -47,11 +59,16 @@ A beautiful ocean-themed memory matching game with 3D card animations, multiple 
 ### File Structure
 ```
 oceanmatch/
-├── index.html          # Main game file (HTML, CSS, JavaScript)
-├── img/               # Ocean creature images
+├── index.html          # Memory Match game
+├── index.htm           # Memory Match (alternate extension)
+├── speedmatch.html     # Speed Match game
+├── manifest.json       # PWA manifest
+├── .htaccess           # Apache configuration
+├── img/                # Ocean creature images
 │   ├── 1.webp - 20.webp
-│   └── Octopus.svg    # Card back design
-└── README.md          # This file
+│   └── Octopus.svg     # Card back design & favicon
+├── LICENSE             # Apache 2.0 License
+└── README.md           # This file
 ```
 
 ## 🎯 How to Play
@@ -147,7 +164,19 @@ This is a standalone web game. To contribute:
 
 ## 📄 License
 
-This project is open source. Please check the license file for details.
+Copyright 2025 Luke Kilpatrick
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 ## 🐛 Known Issues
 
@@ -164,4 +193,6 @@ This project is open source. Please check the license file for details.
 
 ---
 
-**Enjoy playing Mia Kingtide's Ocean Memory Match!** 🌊🐠🦀
+**Enjoy playing Mia Kingtide's Ocean Games!** 🌊🐠🦀
+
+📚 [Explore the Mia Kingtide books on Amazon](https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK)
