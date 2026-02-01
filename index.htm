@@ -732,8 +732,8 @@
                 // Pick a random fallback icon based on the number (consistent per number)
                 const fallbackSvg = fallbackSvgs[imgNumber % fallbackSvgs.length];
                 
-                // START WITH .JPG by default (Most common)
-                const imgPath = `img/${imgNumber}.jpg`;
+                // START WITH .WEBP (primary format)
+                const imgPath = `img/${imgNumber}.webp`;
 
                 card.innerHTML = `
                     <div class="card-inner relative w-full h-full duration-500">
