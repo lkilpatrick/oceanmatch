@@ -284,7 +284,10 @@
         <!-- Header -->
         <header class="text-center mb-6 w-full">
             <h1 class="text-3xl md:text-5xl font-bold text-cyan-900 mb-2 drop-shadow-sm">
-                Mia Kingtide's
+                <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="hover:text-cyan-700 underline decoration-2 underline-offset-4 transition-colors">Mia Kingtide's</a>
                 <span class="block text-xl md:text-3xl text-cyan-700 mt-1">Ocean Memory Match</span>
             </h1>
             
@@ -326,6 +329,9 @@
                 <button onclick="showSettings()" class="text-sm font-bold text-cyan-700 hover:text-cyan-900 underline decoration-2 underline-offset-4 transition-colors">
                     Settings
                 </button>
+                <button onclick="shareGame()" class="text-sm font-bold text-cyan-700 hover:text-cyan-900 underline decoration-2 underline-offset-4 transition-colors">
+                    Share
+                </button>
             </div>
             
             <!-- Progress Bar -->
@@ -355,16 +361,6 @@
         <div id="best-score-display" class="text-cyan-700 text-xs md:text-sm text-center pb-4 max-w-lg hidden">
             <span class="font-bold">Best:</span> <span id="best-time">--:--</span> in <span id="best-moves">--</span> moves
         </div>
-
-        <!-- Book Promotion Footer -->
-        <footer class="w-full mt-8 mb-4 text-center">
-            <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               class="inline-block text-cyan-700 hover:text-cyan-900 font-bold text-sm underline decoration-2 underline-offset-4 transition-colors">
-                Explore the Mia Kingtide Books on Amazon
-            </a>
-        </footer>
 
     </div>
 
@@ -761,12 +757,14 @@
 
                 card.innerHTML = `
                     <div class="card-inner relative w-full h-full duration-500">
+                        <div class="card-front absolute w-full h-full rounded-xl shadow-md border-2 border-white/20 flex items-center justify-center">
+                            ${cardBackIcon}
+                        </div>
                         <div class="card-back absolute w-full h-full rounded-xl shadow-md bg-white flex items-center justify-center">
                             <!-- Fallback SVG (Shown if image fails) -->
                             <div class="absolute inset-0 flex items-center justify-center z-0 p-2 opacity-50">
                                 ${fallbackSvg}
                             </div>
-                            
                             <!-- Main Image -->
                             <img 
                                 src="${imgPath}" 
@@ -774,10 +772,6 @@
                                 class="card-img relative z-10 bg-white" 
                                 onerror="handleImageError(this)"
                             />
-                        </div>
-                        
-                        <div class="card-front absolute w-full h-full rounded-xl shadow-md border-2 border-white/20 flex items-center justify-center">
-                            ${cardBackIcon}
                         </div>
                     </div>
                 `;
@@ -1183,13 +1177,30 @@
             });
         }
 
+        // --- Share Game ---
+        const booksUrl = 'https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK';
+        
+        function shareGame() {
+            const gameUrl = window.location.href.split('?')[0];
+            const text = `🐙 Mia's Ocean Memory Match 🐙\nA fun ocean-themed memory game!\nCan you match all the sea creatures?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Ocean Memory Match", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+
         // --- Share Score ---
         function shareScore(time, movesCount, stars) {
             const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-            const text = `🐙 Mia's Ocean Memory Match 🐙\n${currentDifficulty.toUpperCase()} Mode\n⏱️ ${time} | 🎯 ${movesCount} moves\n${starStr}\nCan you beat my score?`;
+            const gameUrl = window.location.href.split('?')[0];
+            const text = `🐙 Mia's Ocean Memory Match 🐙\n${currentDifficulty.toUpperCase()} Mode\n⏱️ ${time} | 🎯 ${movesCount} moves\n${starStr}\nCan you beat my score?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
             
             if (navigator.share) {
-                navigator.share({ title: "Ocean Memory Match", text });
+                navigator.share({ title: "Ocean Memory Match", text, url: gameUrl });
             } else {
                 navigator.clipboard.writeText(text).then(() => {
                     alert('Score copied to clipboard!');
