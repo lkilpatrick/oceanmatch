@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mia Kingtide's Ocean Focus</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="img/Octopus.svg">
+    
+    <!-- Apple Touch Icon (for iOS homescreen) -->
+    <link rel="apple-touch-icon" href="img/Octopus.svg">
+    
+    <!-- Web App Manifest for Android/PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Ocean Focus">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            /* Purple gradient background */
+            background: linear-gradient(135deg, #e9d5ff 0%, #c4b5fd 50%, #a78bfa 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Crisp image rendering for tiles */
+        .tile-image {
+            image-rendering: auto;
+            -webkit-image-rendering: auto;
+        }
+
+        /* Tile grid */
+        .tile-grid {
+            display: grid;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* Responsive grid sizes */
+        .grid-12 { grid-template-columns: repeat(4, 1fr); }
+        .grid-16 { grid-template-columns: repeat(4, 1fr); }
+        .grid-20 { grid-template-columns: repeat(5, 1fr); }
+
+        @media (max-width: 400px) {
+            .grid-12 { grid-template-columns: repeat(3, 1fr); }
+            .grid-16 { grid-template-columns: repeat(4, 1fr); }
+            .grid-20 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Tile styles */
+        .tile {
+            aspect-ratio: 1;
+            min-width: 72px;
+            min-height: 72px;
+            max-width: 100px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #8b5cf6;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tile:active {
+            transform: scale(0.95);
+        }
+
+        .tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        /* Correct/Wrong feedback */
+        @keyframes correct-pop {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(34, 197, 94, 0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        @keyframes wrong-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+
+        .tile.correct {
+            animation: correct-pop 0.4s ease-out;
+            border-color: #22c55e !important;
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .tile.wrong {
+            animation: wrong-shake 0.4s ease-out;
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .tile.was-correct {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+        }
+
+        /* Prompt card */
+        .prompt-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 32px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #8b5cf6;
+        }
+
+        .prompt-card #prompt-text {
+            font-size: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .prompt-card #prompt-text {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* Countdown overlay */
+        .countdown-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .countdown-number {
+            font-size: 8rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+            animation: countdown-pop 1s ease-out;
+        }
+
+        @keyframes countdown-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Streak bonus celebration */
+        .streak-bonus-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #8b5cf6;
+            text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+            z-index: 100;
+            pointer-events: none;
+            animation: bonus-float 1s ease-out forwards;
+        }
+
+        @keyframes bonus-float {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -70%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -100%) scale(1); }
+        }
+
+        .streak-bonus-pop {
+            animation: streak-pop 0.5s ease;
+        }
+
+        @keyframes streak-pop {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* Timer penalty flash */
+        .timer-penalty {
+            animation: timer-flash 0.3s ease;
+        }
+
+        @keyframes timer-flash {
+            0%, 100% { background: transparent; }
+            50% { background: rgba(239, 68, 68, 0.3); }
+        }
+
+        /* Penalty text */
+        .penalty-text {
+            position: fixed;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            z-index: 100;
+            pointer-events: none;
+            animation: penalty-float 0.8s ease-out forwards;
+        }
+
+        @keyframes penalty-float {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        /* Grid level up notification */
+        .level-up-text {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #8b5cf6;
+            background: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            pointer-events: none;
+            animation: level-pop 1.2s ease-out forwards;
+        }
+
+        @keyframes level-pop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+
+        /* Better tile scaling on larger screens */
+        @media (min-width: 640px) {
+            .tile {
+                min-width: 90px;
+                min-height: 90px;
+                max-width: 120px;
+            }
+            .tile-grid {
+                max-width: 32rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .tile {
+                min-width: 100px;
+                min-height: 100px;
+                max-width: 140px;
+            }
+            .tile-grid {
+                max-width: 40rem;
+            }
+        }
+
+        /* Background bubbles */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            background-color: rgba(255, 255, 255, 0.3);
+            animation: rise 15s infinite ease-in;
+            bottom: -100px;
+        }
+
+        @keyframes rise {
+            0% { bottom: -100px; transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { bottom: 100vh; transform: translateX(-200px); }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Leaderboard modal */
+        .leaderboard-entry {
+            display: grid;
+            grid-template-columns: 30px 1fr 60px 60px;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            align-items: center;
+        }
+        .leaderboard-entry:nth-child(odd) { background: rgba(139, 92, 246, 0.1); }
+        .leaderboard-entry.gold { background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), transparent); }
+        .leaderboard-entry.silver { background: linear-gradient(90deg, rgba(156, 163, 175, 0.3), transparent); }
+        .leaderboard-entry.bronze { background: linear-gradient(90deg, rgba(180, 83, 9, 0.2), transparent); }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: #8b5cf6;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Mode selector buttons */
+        .mode-btn {
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .tile, .bubble, .prompt-card {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        .reduced-motion .tile,
+        .reduced-motion .bubble {
+            animation: none !important;
+            transition: transform 0.1s !important;
+        }
+
+        /* Timer bar */
+        .timer-bar {
+            height: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e);
+            transition: width 0.1s linear;
+        }
+
+        .timer-fill.warning {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .timer-fill.danger {
+            background: #ef4444;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall 3s ease-out forwards;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden relative">
+
+    <!-- Background Bubbles -->
+    <div id="bubbles-container" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+    <div class="container mx-auto px-3 py-4 max-w-lg flex flex-col items-center min-h-screen">
+        
+        <!-- Header -->
+        <header class="text-center mb-4 w-full">
+            <h1 class="text-2xl md:text-3xl font-bold text-purple-900 mb-1 drop-shadow-sm">
+                <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="hover:text-purple-700 underline decoration-2 underline-offset-4 transition-colors">Mia Kingtide's</a>
+                <span class="block text-lg md:text-xl text-purple-700 mt-1">Ocean Focus</span>
+            </h1>
+
+            <!-- Mode Selector -->
+            <div id="mode-selector" class="flex flex-wrap justify-center gap-2 mb-3">
+                <button onclick="setMode('creature')" id="btn-creature" class="mode-btn px-3 py-1.5 rounded-full font-bold text-sm bg-purple-500 text-white active">
+                    🐠 Find Creature
+                </button>
+                <button onclick="setMode('habitat')" id="btn-habitat" class="mode-btn px-3 py-1.5 rounded-full font-bold text-sm bg-purple-200 text-purple-800">
+                    🏠 Find Habitat
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="flex flex-wrap justify-center gap-2 mb-3">
+                <div class="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-purple-900 font-bold border border-purple-200 text-sm">
+                    Score: <span id="score">0</span>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-purple-900 font-bold border border-purple-200 text-sm">
+                    🔥 <span id="streak">0</span>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-purple-900 font-bold border border-purple-200 text-sm">
+                    ⏱️ <span id="timer">60</span>s
+                </div>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="w-full max-w-xs mx-auto mb-3">
+                <div class="timer-bar">
+                    <div id="timer-fill" class="timer-fill" style="width: 100%"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="w-full flex-1 flex flex-col items-center">
+            
+            <!-- Instructions (shown before game) -->
+            <div id="instructions" class="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border-2 border-purple-200 mb-4 max-w-md text-center">
+                <p class="text-purple-800 font-bold mb-2">How to Play</p>
+                <p class="text-purple-700 text-sm">Look at the prompt and tap the matching picture as fast as you can! In <strong>"Find Creature"</strong> mode, tap the named animal. In <strong>"Find Habitat"</strong> mode, tap any picture from that location. More pictures appear as you score!</p>
+            </div>
+
+            <!-- Prompt Card -->
+            <div id="prompt-card" class="prompt-card mb-4 text-center hidden">
+                <p class="text-purple-600 text-xs uppercase tracking-wider font-bold mb-1">Find & Tap</p>
+                <p id="prompt-text" class="text-purple-900 font-bold">Tap the Harbor Seal</p>
+            </div>
+
+            <!-- Tile Grid -->
+            <div id="tile-grid" class="tile-grid w-full max-w-sm mb-4 hidden">
+                <!-- Tiles injected by JS -->
+            </div>
+
+            <!-- Start Button -->
+            <button id="start-btn" onclick="startGame()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-lg transform transition hover:scale-105">
+                Start Game
+            </button>
+
+            <!-- Restart Button (shown during game) -->
+            <button id="restart-btn" onclick="restartGame()" class="hidden bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full shadow-lg">
+                Restart
+            </button>
+
+        </main>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+        <div id="countdown-number" class="countdown-number">3</div>
+    </div>
+
+        <!-- Navigation -->
+        <footer class="flex flex-wrap gap-3 justify-center mt-4 pb-4">
+            <a href="https://pitterpatterdiving.com" class="text-sm font-bold text-purple-700 hover:text-purple-900 underline decoration-2 underline-offset-4 transition-colors">
+                Home
+            </a>
+            <a href="index.html" class="text-sm font-bold text-purple-700 hover:text-purple-900 underline decoration-2 underline-offset-4 transition-colors">
+                Game Menu
+            </a>
+            <button onclick="showLeaderboard()" class="text-sm font-bold text-purple-700 hover:text-purple-900 underline decoration-2 underline-offset-4 transition-colors">
+                🏆 Leaderboard
+            </button>
+            <button onclick="showSettings()" class="text-sm font-bold text-purple-700 hover:text-purple-900 underline decoration-2 underline-offset-4 transition-colors">
+                ⚙️ Settings
+            </button>
+            <button onclick="shareGame()" class="text-sm font-bold text-purple-700 hover:text-purple-900 underline decoration-2 underline-offset-4 transition-colors">
+                Share
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border-4 border-purple-300 relative overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="absolute top-0 left-0 w-full h-4 bg-purple-400"></div>
+            <h2 class="text-2xl font-display font-bold text-purple-900 mb-4 mt-4">Leaderboard</h2>
+            
+            <!-- Mode tabs -->
+            <div class="flex gap-2 mb-4">
+                <button onclick="showLeaderboardTab('creature')" id="lb-tab-creature" class="px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-700">Find Creature</button>
+                <button onclick="showLeaderboardTab('habitat')" id="lb-tab-habitat" class="px-3 py-1 rounded-full text-sm font-bold bg-violet-100 text-violet-700">Find Habitat</button>
+            </div>
+            
+            <div id="leaderboard-content" class="flex-1 overflow-y-auto">
+                <!-- Entries injected by JS -->
+            </div>
+            
+            <button onclick="closeLeaderboard()" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full">Close</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-4 border-purple-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-purple-400"></div>
+            <h2 class="text-2xl font-display font-bold text-purple-900 mb-6 mt-4">Settings</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-purple-800 font-bold">Sound Effects</label>
+                    <div id="toggle-sound" class="toggle-switch active" onclick="toggleSound()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-purple-800 font-bold">Haptic Feedback</label>
+                    <div id="toggle-haptic" class="toggle-switch active" onclick="toggleHaptic()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-purple-800 font-bold">Reduced Motion</label>
+                    <div id="toggle-motion" class="toggle-switch" onclick="toggleMotion()"></div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-purple-200">
+                <label class="text-purple-800 font-bold block mb-2">Your Name (for leaderboard)</label>
+                <input type="text" id="player-name" class="w-full px-4 py-2 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500" placeholder="Enter your name" maxlength="20">
+            </div>
+            
+            <button onclick="closeSettings()" class="mt-6 w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full">Save & Close</button>
+        </div>
+    </div>
+
+    <!-- End Game Modal -->
+    <div id="end-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-purple-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-purple-400"></div>
+            
+            <h2 class="text-3xl font-display font-bold text-purple-900 mb-2 mt-4">Great Focus!</h2>
+            <p class="text-purple-600 font-bold text-lg mb-6">You found so many creatures!</p>
+            
+            <!-- Results Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-purple-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-purple-600 font-bold">Score</p>
+                    <p id="final-score" class="text-2xl font-bold text-purple-900">0</p>
+                </div>
+                <div class="bg-purple-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-purple-600 font-bold">Streak</p>
+                    <p id="final-streak" class="text-2xl font-bold text-purple-900">0</p>
+                </div>
+                <div class="bg-purple-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-purple-600 font-bold">Accuracy</p>
+                    <p id="final-accuracy" class="text-xl font-bold text-purple-900">0%</p>
+                </div>
+            </div>
+
+            <div id="new-best" class="text-green-600 font-bold mb-4 hidden">🎉 NEW HIGH SCORE! 🎉</div>
+            
+            <!-- Name Input (shown if default) -->
+            <div id="win-name-input" class="mb-4 hidden">
+                <label class="text-xs uppercase tracking-wider text-purple-600 font-bold block mb-2">Enter Your Name for Leaderboard</label>
+                <input type="text" id="win-player-name" class="w-full px-4 py-2 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 text-center" placeholder="Your name" maxlength="20">
+            </div>
+            
+            <div id="best-scores" class="bg-purple-50 p-3 rounded-xl mb-6">
+                <p class="text-xs uppercase tracking-wider text-purple-600 font-bold mb-2">Best Scores</p>
+                <p class="text-sm text-purple-800"><span class="font-bold">This Mode:</span> <span id="best-mode-score">0</span></p>
+                <p class="text-sm text-purple-800"><span class="font-bold">Best Streak:</span> <span id="best-mode-streak">0</span></p>
+            </div>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="startGame()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex-1">
+                    Play Again
+                </button>
+                <button onclick="shareScore()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95">
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // CONFIGURATION
+        // ===========================================
+        
+        const GAME_DURATION = 60;  // seconds
+        const TIME_PENALTY = 1;    // seconds lost on wrong answer
+        
+        // Difficulty progression thresholds
+        const GRID_12_THRESHOLD = 0;   // Start with 12 tiles
+        const GRID_16_THRESHOLD = 10;  // Switch to 16 tiles at score 10
+        const GRID_20_THRESHOLD = 20;  // Switch to 20 tiles at score 20
+        
+        // ===========================================
+        // TILE DATA - Reusing Sanctuary Sort mappings
+        // ===========================================
+        
+        const TILES = [
+            { id: 1,  src: "img/1.webp",  label: "Mia",                  habitat: "indoors",    story: "story" },
+            { id: 2,  src: "img/2.webp",  label: "Mia Reading",          habitat: "indoors",    story: "story" },
+            { id: 3,  src: "img/3.webp",  label: "Pool Deck",            habitat: "pool",       story: "story" },
+            { id: 4,  src: "img/4.webp",  label: "Pool Dive",           habitat: "pool",       story: "story" },
+            { id: 5,  src: "img/5.webp",  label: "Kayaking",           habitat: "surface",    story: "story" },
+            { id: 6,  src: "img/6.webp",  label: "Tidepool",             habitat: "shoreline",  story: "story" },
+            { id: 7,  src: "img/7.webp",  label: "Sea Otter",          habitat: "underwater", story: "real" },
+            { id: 8,  src: "img/8.webp",  label: "Sea Lion",           habitat: "underwater", story: "real" },
+            { id: 9,  src: "img/9.webp",  label: "Harbor Seal",            habitat: "underwater", story: "real" },
+            { id: 10, src: "img/10.webp", label: "Dad",                 habitat: "indoors",    story: "story" },
+            { id: 11, src: "img/11.webp", label: "Mia",       habitat: "indoors",    story: "story" },
+            { id: 12, src: "img/12.webp", label: "Sea Turtle",           habitat: "underwater", story: "real" },
+            { id: 13, src: "img/13.webp", label: "Scorpionfish",            habitat: "underwater", story: "real" },
+            { id: 14, src: "img/14.webp", label: "Clownfish",              habitat: "underwater", story: "real" },
+            { id: 15, src: "img/15.webp", label: "Jellyfish",             habitat: "underwater", story: "real" },
+            { id: 16, src: "img/16.webp", label: "Coral Reef",           habitat: "underwater", story: "real" },
+            { id: 17, src: "img/17.webp", label: "Copper Rockfish",              habitat: "underwater", story: "real" },
+            { id: 18, src: "img/18.webp", label: "Nudibranch",                habitat: "underwater", story: "real" },
+            { id: 19, src: "img/19.webp", label: "David Packard Ship",              habitat: "surface",    story: "real" },
+            { id: 20, src: "img/20.webp", label: "Pitter Patter Boat",         habitat: "surface",    story: "story" },
+        ];
+        
+        // Creature prompts for Mode A - matched to TILES data
+        const CREATURE_PROMPTS = [
+            { text: "Tap Mia", tileIds: [1, 2, 3, 4, 5, 6, 11] },
+            { text: "Tap Dad", tileIds: [10] },
+            { text: "Tap the Sea Otter", tileIds: [7] },
+            { text: "Tap the Sea Lion", tileIds: [8] },
+            { text: "Tap the Harbor Seal", tileIds: [9] },
+            { text: "Tap the Sea Turtle", tileIds: [12] },
+            { text: "Tap the Scorpionfish", tileIds: [13] },
+            { text: "Tap the Clownfish", tileIds: [14] },
+            { text: "Tap the Jellyfish", tileIds: [15] },
+            { text: "Tap the Coral Reef", tileIds: [16] },
+            { text: "Tap the Copper Rockfish", tileIds: [17] },
+            { text: "Tap the Nudibranch", tileIds: [18] },
+            { text: "Tap the Tidepool", tileIds: [6] },
+            { text: "Tap the Pool", tileIds: [3, 4] },
+            { text: "Tap the Kayak", tileIds: [5] },
+            { text: "Tap the Boat", tileIds: [19, 20] },
+        ];
+        
+        // Habitat prompts for Mode B (reusing Sanctuary Sort categories)
+        const HABITAT_PROMPTS = [
+            { text: "Tap an Indoors picture", habitat: "indoors" },
+            { text: "Tap a Pool picture", habitat: "pool" },
+            { text: "Tap an Ocean Surface picture", habitat: "surface" },
+            { text: "Tap a Shoreline picture", habitat: "shoreline" },
+            { text: "Tap an Underwater picture", habitat: "underwater" },
+        ];
+        
+        // ===========================================
+        // GAME STATE
+        // ===========================================
+        
+        let currentMode = 'creature';  // 'creature' or 'habitat'
+        let gameActive = false;
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let totalTaps = 0;
+        let correctTaps = 0;
+        let timeRemaining = GAME_DURATION;
+        let timerInterval = null;
+        let currentPrompt = null;
+        let currentGridTiles = [];
+        let currentGridSize = 12;
+        let previousGridSize = 12;
+        
+        // Settings
+        let soundEnabled = true;
+        let hapticEnabled = true;
+        let motionEnabled = true;
+        let playerName = 'Player';
+        
+        // Audio context
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        
+        // ===========================================
+        // INITIALIZATION
+        // ===========================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            createBubbles();
+            loadSettings();
+        });
+        
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for (let i = 0; i < 10; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.width = bubble.style.height = (Math.random() * 30 + 15) + 'px';
+                bubble.style.animationDelay = Math.random() * 15 + 's';
+                bubble.style.animationDuration = (Math.random() * 10 + 12) + 's';
+                container.appendChild(bubble);
+            }
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('oceanfocus-settings') || '{}');
+            soundEnabled = settings.sound !== false;
+            hapticEnabled = settings.haptic !== false;
+            motionEnabled = settings.motion !== false;
+            playerName = localStorage.getItem('oceanfocus-player-name') || 'Player';
+            
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('toggle-haptic').classList.toggle('active', hapticEnabled);
+            document.body.classList.toggle('reduced-motion', !motionEnabled);
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('oceanfocus-settings', JSON.stringify({
+                sound: soundEnabled,
+                haptic: hapticEnabled,
+                motion: motionEnabled
+            }));
+        }
+        
+        // ===========================================
+        // MODE SELECTION
+        // ===========================================
+        
+        function setMode(mode) {
+            if (gameActive) return;
+            
+            currentMode = mode;
+            
+            document.getElementById('btn-creature').classList.toggle('active', mode === 'creature');
+            document.getElementById('btn-creature').classList.toggle('bg-purple-500', mode === 'creature');
+            document.getElementById('btn-creature').classList.toggle('text-white', mode === 'creature');
+            document.getElementById('btn-creature').classList.toggle('bg-purple-200', mode !== 'creature');
+            document.getElementById('btn-creature').classList.toggle('text-purple-800', mode !== 'creature');
+            
+            document.getElementById('btn-habitat').classList.toggle('active', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('bg-purple-500', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('text-white', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('bg-purple-200', mode !== 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('text-purple-800', mode !== 'habitat');
+        }
+        
+        // ===========================================
+        // GAME FLOW
+        // ===========================================
+        
+        function startGame() {
+            // Save name from win modal if entered
+            const winNameField = document.getElementById('win-player-name');
+            if (winNameField && winNameField.value.trim()) {
+                playerName = winNameField.value.trim();
+                document.getElementById('player-name').value = playerName;
+                saveSettings();
+                // Update the last leaderboard entry with the new name
+                updateLastLeaderboardName(currentMode, playerName);
+            }
+            document.getElementById('win-name-input').classList.add('hidden');
+            
+            // Reset state
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            totalTaps = 0;
+            correctTaps = 0;
+            timeRemaining = GAME_DURATION;
+            currentGridSize = 12;
+            previousGridSize = 12;
+            
+            // Update UI
+            updateStats();
+            document.getElementById('end-modal').classList.add('hidden');
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('mode-selector').classList.add('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+            
+            // Initialize audio
+            if (soundEnabled && !audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+            
+            // Show countdown then start
+            showCountdown();
+        }
+        
+        function showCountdown() {
+            const overlay = document.getElementById('countdown-overlay');
+            const numberEl = document.getElementById('countdown-number');
+            
+            overlay.classList.remove('hidden');
+            
+            let count = 3;
+            numberEl.textContent = count;
+            
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    numberEl.textContent = count;
+                    numberEl.style.animation = 'none';
+                    numberEl.offsetHeight; // Trigger reflow
+                    numberEl.style.animation = 'countdown-pop 1s ease-out';
+                } else {
+                    clearInterval(countInterval);
+                    overlay.classList.add('hidden');
+                    
+                    // Now actually start the game
+                    document.getElementById('restart-btn').classList.remove('hidden');
+                    document.getElementById('prompt-card').classList.remove('hidden');
+                    document.getElementById('tile-grid').classList.remove('hidden');
+                    
+                    gameActive = true;
+                    nextRound();
+                    startTimer();
+                }
+            }, 1000);
+        }
+        
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            document.getElementById('timer').textContent = Math.max(0, timeRemaining);
+            
+            const percent = (timeRemaining / GAME_DURATION) * 100;
+            const timerFill = document.getElementById('timer-fill');
+            timerFill.style.width = percent + '%';
+            
+            timerFill.classList.remove('warning', 'danger');
+            if (percent <= 20) {
+                timerFill.classList.add('danger');
+            } else if (percent <= 40) {
+                timerFill.classList.add('warning');
+            }
+        }
+        
+        function endGame() {
+            gameActive = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Calculate accuracy
+            const accuracy = totalTaps > 0 ? Math.round((correctTaps / totalTaps) * 100) : 0;
+            
+            // Save best scores
+            const storageKey = `oceanfocus-best-${currentMode}`;
+            const streakKey = `oceanfocus-streak-${currentMode}`;
+            
+            const prevBest = parseInt(localStorage.getItem(storageKey) || '0');
+            const prevBestStreak = parseInt(localStorage.getItem(streakKey) || '0');
+            
+            const isNewBest = score > prevBest;
+            
+            if (isNewBest) {
+                localStorage.setItem(storageKey, score.toString());
+            }
+            
+            if (bestStreak > prevBestStreak) {
+                localStorage.setItem(streakKey, bestStreak.toString());
+            }
+            
+            // Add to leaderboard
+            let leaderboardRank = 0;
+            if (score > 0) {
+                leaderboardRank = addToLeaderboard(currentMode, playerName, score, accuracy, bestStreak);
+            }
+            
+            // Show results
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-streak').textContent = bestStreak;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            document.getElementById('best-mode-score').textContent = Math.max(score, prevBest);
+            document.getElementById('best-mode-streak').textContent = Math.max(bestStreak, prevBestStreak);
+            
+            // Show new best and leaderboard rank
+            let newBestHtml = '';
+            if (isNewBest) {
+                newBestHtml = '🎉 NEW HIGH SCORE! 🎉';
+                fireConfetti();
+            }
+            if (leaderboardRank > 0 && leaderboardRank <= 10) {
+                newBestHtml += (newBestHtml ? '<br>' : '') + `🏆 #${leaderboardRank} on leaderboard!`;
+            }
+            document.getElementById('new-best').innerHTML = newBestHtml;
+            document.getElementById('new-best').classList.toggle('hidden', !newBestHtml);
+            
+            // Show name input if still default
+            const nameInput = document.getElementById('win-name-input');
+            const winNameField = document.getElementById('win-player-name');
+            if (playerName === 'Player') {
+                nameInput.classList.remove('hidden');
+                winNameField.value = '';
+                setTimeout(() => winNameField.focus(), 100);
+            } else {
+                nameInput.classList.add('hidden');
+            }
+            
+            document.getElementById('end-modal').classList.remove('hidden');
+            
+            // Reset UI
+            document.getElementById('prompt-card').classList.add('hidden');
+            document.getElementById('tile-grid').classList.add('hidden');
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('restart-btn').classList.add('hidden');
+            document.getElementById('mode-selector').classList.remove('hidden');
+            document.getElementById('instructions').classList.remove('hidden');
+        }
+        
+        function restartGame() {
+            // Stop current game
+            gameActive = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Start fresh
+            startGame();
+        }
+        
+        // ===========================================
+        // ROUND MANAGEMENT
+        // ===========================================
+        
+        function nextRound() {
+            if (!gameActive) return;
+            
+            // Update grid size based on score
+            previousGridSize = currentGridSize;
+            if (score >= GRID_20_THRESHOLD) {
+                currentGridSize = 20;
+            } else if (score >= GRID_16_THRESHOLD) {
+                currentGridSize = 16;
+            } else {
+                currentGridSize = 12;
+            }
+            
+            // Show level up notification if grid size increased
+            if (currentGridSize > previousGridSize) {
+                showLevelUp(currentGridSize);
+            }
+            
+            // Generate prompt and grid
+            generatePromptAndGrid();
+            renderGrid();
+        }
+        
+        function showLevelUp(newSize) {
+            const levelText = document.createElement('div');
+            levelText.className = 'level-up-text';
+            levelText.textContent = `⬆️ Grid expanded to ${newSize} pictures!`;
+            document.body.appendChild(levelText);
+            
+            setTimeout(() => levelText.remove(), 1200);
+        }
+        
+        function generatePromptAndGrid() {
+            if (currentMode === 'creature') {
+                // Pick a random creature prompt
+                currentPrompt = CREATURE_PROMPTS[Math.floor(Math.random() * CREATURE_PROMPTS.length)];
+                
+                // Get tiles that match this prompt
+                const matchingTiles = TILES.filter(t => currentPrompt.tileIds.includes(t.id));
+                
+                // Get other tiles (not matching)
+                const otherTiles = TILES.filter(t => !currentPrompt.tileIds.includes(t.id));
+                
+                // Shuffle and pick tiles for grid
+                const shuffledOthers = shuffleArray([...otherTiles]);
+                
+                // Ensure at least one correct tile
+                const correctTile = matchingTiles[Math.floor(Math.random() * matchingTiles.length)];
+                const gridTiles = [correctTile, ...shuffledOthers.slice(0, currentGridSize - 1)];
+                
+                currentGridTiles = shuffleArray(gridTiles);
+                
+            } else {
+                // Habitat mode
+                currentPrompt = HABITAT_PROMPTS[Math.floor(Math.random() * HABITAT_PROMPTS.length)];
+                
+                // Get tiles that match this habitat
+                const matchingTiles = TILES.filter(t => t.habitat === currentPrompt.habitat);
+                const otherTiles = TILES.filter(t => t.habitat !== currentPrompt.habitat);
+                
+                // Shuffle
+                const shuffledMatching = shuffleArray([...matchingTiles]);
+                const shuffledOthers = shuffleArray([...otherTiles]);
+                
+                // Ensure at least one correct tile, maybe more
+                const numCorrect = Math.min(Math.floor(Math.random() * 3) + 1, shuffledMatching.length);
+                const correctTiles = shuffledMatching.slice(0, numCorrect);
+                const incorrectTiles = shuffledOthers.slice(0, currentGridSize - numCorrect);
+                
+                currentGridTiles = shuffleArray([...correctTiles, ...incorrectTiles]);
+            }
+            
+            // Update prompt display
+            document.getElementById('prompt-text').textContent = currentPrompt.text;
+        }
+        
+        function renderGrid() {
+            const grid = document.getElementById('tile-grid');
+            
+            // Set grid class based on size
+            grid.className = 'tile-grid w-full max-w-sm mb-4';
+            if (currentGridSize === 12) {
+                grid.classList.add('grid-12');
+            } else if (currentGridSize === 16) {
+                grid.classList.add('grid-16');
+            } else {
+                grid.classList.add('grid-20');
+            }
+            
+            // Render tiles
+            grid.innerHTML = currentGridTiles.map(tile => `
+                <div class="tile" data-tile-id="${tile.id}" onclick="handleTap(${tile.id})">
+                    <img src="${tile.src}" alt="${tile.label}" class="tile-image">
+                </div>
+            `).join('');
+        }
+        
+        // ===========================================
+        // TAP HANDLING
+        // ===========================================
+        
+        function handleTap(tileId) {
+            if (!gameActive) return;
+            
+            totalTaps++;
+            
+            const tile = TILES.find(t => t.id === tileId);
+            const tileElement = document.querySelector(`[data-tile-id="${tileId}"]`);
+            
+            let isCorrect = false;
+            
+            if (currentMode === 'creature') {
+                isCorrect = currentPrompt.tileIds.includes(tileId);
+            } else {
+                isCorrect = tile.habitat === currentPrompt.habitat;
+            }
+            
+            if (isCorrect) {
+                handleCorrect(tileElement);
+            } else {
+                handleWrong(tileElement);
+            }
+        }
+        
+        function handleCorrect(tileElement) {
+            correctTaps++;
+            score++;
+            streak++;
+            
+            if (streak > bestStreak) {
+                bestStreak = streak;
+            }
+            
+            // Streak bonus celebration at every 5
+            if (streak > 0 && streak % 5 === 0) {
+                showStreakBonus();
+            }
+            
+            // Visual feedback
+            tileElement.classList.add('correct');
+            
+            // Sound
+            if (soundEnabled) playSound('correct');
+            
+            // Haptic
+            triggerHaptic('light');
+            
+            updateStats();
+            
+            // Next round after brief delay
+            setTimeout(() => {
+                nextRound();
+            }, 300);
+        }
+        
+        function showStreakBonus() {
+            const bonusText = document.createElement('div');
+            bonusText.className = 'streak-bonus-text';
+            bonusText.textContent = `🔥 ${streak} Streak! 🔥`;
+            document.body.appendChild(bonusText);
+            
+            // Also animate the streak counter
+            const streakEl = document.getElementById('streak').parentElement;
+            streakEl.classList.add('streak-bonus-pop');
+            
+            setTimeout(() => {
+                bonusText.remove();
+                streakEl.classList.remove('streak-bonus-pop');
+            }, 1000);
+        }
+        
+        function handleWrong(tileElement) {
+            streak = 0;
+            
+            // Time penalty
+            timeRemaining = Math.max(0, timeRemaining - TIME_PENALTY);
+            updateTimerDisplay();
+            
+            // Show penalty text
+            showTimerPenalty(tileElement);
+            
+            // Visual feedback
+            tileElement.classList.add('wrong');
+            
+            // Sound
+            if (soundEnabled) playSound('wrong');
+            
+            // Haptic
+            triggerHaptic('heavy');
+            
+            updateStats();
+            
+            // Show correct tiles briefly
+            highlightCorrectTiles();
+            
+            // Remove wrong class after animation
+            setTimeout(() => {
+                tileElement.classList.remove('wrong');
+                clearCorrectHighlights();
+            }, 800);
+        }
+        
+        function showTimerPenalty(tileElement) {
+            const rect = tileElement.getBoundingClientRect();
+            const penaltyText = document.createElement('div');
+            penaltyText.className = 'penalty-text';
+            penaltyText.textContent = `-${TIME_PENALTY}s`;
+            penaltyText.style.left = rect.left + rect.width / 2 + 'px';
+            penaltyText.style.top = rect.top + 'px';
+            document.body.appendChild(penaltyText);
+            
+            // Flash timer
+            const timerEl = document.getElementById('timer').parentElement;
+            timerEl.classList.add('timer-penalty');
+            
+            setTimeout(() => {
+                penaltyText.remove();
+                timerEl.classList.remove('timer-penalty');
+            }, 800);
+        }
+        
+        function highlightCorrectTiles() {
+            currentGridTiles.forEach(tile => {
+                let isCorrect = false;
+                if (currentMode === 'creature') {
+                    isCorrect = currentPrompt.tileIds.includes(tile.id);
+                } else {
+                    isCorrect = tile.habitat === currentPrompt.habitat;
+                }
+                
+                if (isCorrect) {
+                    const el = document.querySelector(`[data-tile-id="${tile.id}"]`);
+                    if (el) el.classList.add('was-correct');
+                }
+            });
+        }
+        
+        function clearCorrectHighlights() {
+            document.querySelectorAll('.tile.was-correct').forEach(el => {
+                el.classList.remove('was-correct');
+            });
+        }
+        
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+        
+        // ===========================================
+        // UTILITIES
+        // ===========================================
+        
+        function shuffleArray(array) {
+            // Fisher-Yates shuffle
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // ===========================================
+        // AUDIO
+        // ===========================================
+        
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.15, now);
+            
+            if (type === 'correct') {
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.08);
+                osc.frequency.setValueAtTime(784, now + 0.16);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+        
+        // ===========================================
+        // HAPTICS
+        // ===========================================
+        
+        function triggerHaptic(type) {
+            if (!hapticEnabled) return;
+            
+            if ('vibrate' in navigator) {
+                if (type === 'light') {
+                    navigator.vibrate(10);
+                } else if (type === 'heavy') {
+                    navigator.vibrate([30, 20, 30]);
+                }
+            }
+        }
+        
+        // ===========================================
+        // SETTINGS
+        // ===========================================
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            saveSettings();
+            
+            if (soundEnabled && !audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+        
+        function toggleHaptic() {
+            hapticEnabled = !hapticEnabled;
+            document.getElementById('toggle-haptic').classList.toggle('active', hapticEnabled);
+            saveSettings();
+        }
+        
+        function toggleMotion() {
+            motionEnabled = !motionEnabled;
+            document.getElementById('toggle-motion').classList.toggle('active', !motionEnabled);
+            document.body.classList.toggle('reduced-motion', !motionEnabled);
+            saveSettings();
+        }
+        
+        function showSettings() {
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('toggle-haptic').classList.toggle('active', hapticEnabled);
+            document.getElementById('toggle-motion').classList.toggle('active', !motionEnabled);
+            document.getElementById('player-name').value = playerName;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        
+        function closeSettings() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (nameInput) {
+                playerName = nameInput;
+                localStorage.setItem('oceanfocus-player-name', playerName);
+            }
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        
+        // ===========================================
+        // LEADERBOARD
+        // ===========================================
+        
+        let lastLeaderboardDate = null;
+        
+        function getLeaderboardKey(mode) {
+            return `oceanfocus-leaderboard-${mode}`;
+        }
+        
+        function getLeaderboard(mode) {
+            const key = getLeaderboardKey(mode);
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        function addToLeaderboard(mode, name, scoreVal, accuracyVal, streakVal) {
+            const leaderboard = getLeaderboard(mode);
+            lastLeaderboardDate = Date.now();
+            leaderboard.push({ 
+                name, 
+                score: scoreVal, 
+                accuracy: accuracyVal, 
+                streak: streakVal,
+                date: lastLeaderboardDate 
+            });
+            leaderboard.sort((a, b) => b.score - a.score);
+            const top10 = leaderboard.slice(0, 10);
+            localStorage.setItem(getLeaderboardKey(mode), JSON.stringify(top10));
+            return top10.findIndex(e => e.date === lastLeaderboardDate) + 1;
+        }
+        
+        function updateLastLeaderboardName(mode, newName) {
+            if (!lastLeaderboardDate) return;
+            const leaderboard = getLeaderboard(mode);
+            const entry = leaderboard.find(e => e.date === lastLeaderboardDate);
+            if (entry) {
+                entry.name = newName;
+                localStorage.setItem(getLeaderboardKey(mode), JSON.stringify(leaderboard));
+            }
+        }
+        
+        function showLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.remove('hidden');
+            showLeaderboardTab(currentMode);
+        }
+        
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.add('hidden');
+        }
+        
+        function showLeaderboardTab(mode) {
+            ['creature', 'habitat'].forEach(m => {
+                document.getElementById(`lb-tab-${m}`).classList.toggle('ring-2', m === mode);
+                document.getElementById(`lb-tab-${m}`).classList.toggle('ring-purple-500', m === mode);
+            });
+            
+            const leaderboard = getLeaderboard(mode);
+            const content = document.getElementById('leaderboard-content');
+            
+            if (leaderboard.length === 0) {
+                content.innerHTML = '<p class="text-center text-purple-600 py-8">No scores yet! Be the first to play.</p>';
+                return;
+            }
+            
+            let html = '<div class="space-y-1">';
+            leaderboard.forEach((entry, i) => {
+                const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                html += `
+                    <div class="leaderboard-entry ${medal}">
+                        <span class="font-bold text-purple-800">${rankIcon}</span>
+                        <span class="font-bold text-purple-900 truncate">${entry.name}</span>
+                        <span class="text-purple-700 text-sm">${entry.score} pts</span>
+                        <span class="text-purple-700 text-sm">${entry.accuracy}%</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        }
+        
+        // ===========================================
+        // SHARING
+        // ===========================================
+        
+        const booksUrl = 'https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK';
+        
+        function shareGame() {
+            const gameUrl = window.location.href.split('?')[0];
+            const text = `🐙 Mia Kingtide's Ocean Focus 🐙\nTest your focus with ocean creatures!\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Ocean Focus", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+        
+        function shareScore() {
+            const gameUrl = window.location.href.split('?')[0];
+            const modeLabel = currentMode === 'creature' ? 'Find Creature' : 'Find Habitat';
+            const accuracy = totalTaps > 0 ? Math.round((correctTaps / totalTaps) * 100) : 0;
+            
+            const text = `🐙 Mia Kingtide's Ocean Focus 🐙\n${modeLabel} Mode\n🎯 Score: ${score} | 🔥 Best Streak: ${bestStreak}\n📊 Accuracy: ${accuracy}%\nCan you beat my score?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Ocean Focus Score", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Score copied to clipboard!');
+                });
+            }
+        }
+        
+        // ===========================================
+        // VISUAL EFFECTS
+        // ===========================================
+        
+        function fireConfetti() {
+            const colors = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#fbbf24', '#22c55e'];
+            
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                const size = Math.random() * 10 + 5;
+                
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = '-20px';
+                confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }
+        }
+    </script>
+
+</body>
+</html>

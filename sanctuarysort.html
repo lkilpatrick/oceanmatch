@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mia Kingtide's Sanctuary Sort</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="img/Octopus.svg">
+    
+    <!-- Apple Touch Icon (for iOS homescreen) -->
+    <link rel="apple-touch-icon" href="img/Octopus.svg">
+    
+    <!-- Web App Manifest for Android/PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f97316">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sanctuary Sort">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            /* Warm orange gradient background */
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 50%, #fb923c 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Crisp image rendering for tiles */
+        .tile-image {
+            image-rendering: auto;
+            -webkit-image-rendering: auto;
+        }
+
+        /* Current tile card */
+        .tile-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tile-card:hover {
+            transform: scale(1.02);
+        }
+
+        .tile-card.dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+            cursor: grabbing;
+        }
+
+        /* Bin styles */
+        .sort-bin {
+            transition: all 0.2s ease;
+            min-height: 90px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 640px) {
+            .sort-bin {
+                min-height: 70px;
+                padding: 12px 8px !important;
+            }
+        }
+
+        .sort-bin:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .sort-bin.drag-over {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.5);
+            border-color: #f97316 !important;
+        }
+
+        .sort-bin.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.5);
+            border-color: #f97316 !important;
+        }
+
+        .sort-bin.correct-highlight {
+            animation: correct-pulse 0.6s ease;
+            border-color: #22c55e !important;
+            background-color: rgba(34, 197, 94, 0.3) !important;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.6) !important;
+            transform: scale(1.08);
+        }
+
+        /* Streak bonus celebration */
+        @keyframes streak-bonus {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .streak-bonus-pop {
+            animation: streak-bonus 0.5s ease;
+        }
+
+        .streak-bonus-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f97316;
+            text-shadow: 0 0 20px rgba(251, 146, 60, 0.8);
+            z-index: 100;
+            pointer-events: none;
+            animation: bonus-float 1s ease-out forwards;
+        }
+
+        @keyframes bonus-float {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -70%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -100%) scale(1); }
+        }
+
+        .sort-bin.wrong-highlight {
+            animation: wrong-shake 0.4s ease;
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.2) !important;
+        }
+
+        /* Animations */
+        @keyframes correct-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrong-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        @keyframes tile-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes tile-shake {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-5deg); }
+            40% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            80% { transform: rotate(5deg); }
+        }
+
+        .tile-correct {
+            animation: tile-pop 0.4s ease forwards;
+        }
+
+        .tile-wrong {
+            animation: tile-shake 0.4s ease;
+        }
+
+        /* Confetti animation */
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Sparkle effect */
+        @keyframes sparkle {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) rotate(180deg); opacity: 0; }
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #fbbf24 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 0.6s ease-out forwards;
+        }
+
+        /* Bubble background */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            background-color: rgba(255, 255, 255, 0.3);
+            animation: rise 15s infinite ease-in;
+            bottom: -100px;
+        }
+
+        @keyframes rise {
+            0% { bottom: -100px; transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { bottom: 100vh; transform: translateX(-200px); }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Leaderboard modal */
+        .leaderboard-entry {
+            display: grid;
+            grid-template-columns: 30px 1fr 60px 60px;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            align-items: center;
+        }
+        .leaderboard-entry:nth-child(odd) { background: rgba(251, 146, 60, 0.1); }
+        .leaderboard-entry.gold { background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), transparent); }
+        .leaderboard-entry.silver { background: linear-gradient(90deg, rgba(156, 163, 175, 0.3), transparent); }
+        .leaderboard-entry.bronze { background: linear-gradient(90deg, rgba(180, 83, 9, 0.2), transparent); }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: #f97316;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .tile-card, .sort-bin, .sparkle, .bubble {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        .reduced-motion .tile-card,
+        .reduced-motion .sort-bin,
+        .reduced-motion .sparkle,
+        .reduced-motion .bubble {
+            animation: none !important;
+            transition: transform 0.1s !important;
+        }
+
+        /* Octopus mascot */
+        .mascot {
+            width: 48px;
+            height: 48px;
+            transition: transform 0.3s ease;
+        }
+
+        .mascot.happy {
+            animation: mascot-happy 0.5s ease;
+        }
+
+        .mascot.sad {
+            animation: mascot-sad 0.5s ease;
+        }
+
+        @keyframes mascot-happy {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-10deg); }
+            75% { transform: scale(1.2) rotate(10deg); }
+        }
+
+        @keyframes mascot-sad {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9) translateY(5px); }
+        }
+
+        /* Mode selector buttons */
+        .mode-btn {
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden relative">
+
+    <!-- Background Bubbles -->
+    <div id="bubbles-container" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+    <div class="container mx-auto px-4 py-4 md:py-6 max-w-4xl flex flex-col items-center min-h-screen">
+        
+        <!-- Header -->
+        <header class="text-center mb-4 w-full">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <!-- Octopus Mascot -->
+                <img id="mascot" src="img/Octopus.svg" alt="Octopus mascot" class="mascot" onerror="this.style.display='none'">
+                <h1 class="text-3xl md:text-4xl font-bold text-orange-900 drop-shadow-sm">
+                    <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="hover:text-orange-700 underline decoration-2 underline-offset-4 transition-colors">Mia Kingtide's</a>
+                    <span class="block text-xl md:text-2xl text-orange-700 mt-1">Sanctuary Sort</span>
+                </h1>
+            </div>
+
+            <!-- Mode Selector -->
+            <div id="mode-selector" class="flex flex-wrap justify-center gap-2 mb-4">
+                <button onclick="setMode('habitat')" id="btn-habitat" class="mode-btn px-4 py-2 rounded-full font-bold text-sm bg-orange-200 text-orange-800">
+                    🏠 Where is it?
+                </button>
+                <button onclick="setMode('story')" id="btn-story" class="mode-btn px-4 py-2 rounded-full font-bold text-sm bg-orange-500 text-white active">
+                    📖 Story vs Real
+                </button>
+            </div>
+
+            <!-- Game Type Toggle -->
+            <div class="flex justify-center gap-4 mb-4">
+                <button onclick="setGameType('timeattack')" id="btn-timeattack" class="mode-btn px-4 py-2 rounded-full font-bold text-sm bg-amber-500 text-white active">
+                    ⏱️ Time Attack
+                </button>
+                <button onclick="setGameType('practice')" id="btn-practice" class="mode-btn px-4 py-2 rounded-full font-bold text-sm bg-amber-200 text-amber-800">
+                    📚 Practice
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="flex flex-wrap justify-center gap-3 mb-4">
+                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-orange-900 font-bold border border-orange-200">
+                    Score: <span id="score">0</span>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-orange-900 font-bold border border-orange-200">
+                    🔥 Streak: <span id="streak">0</span>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-orange-900 font-bold border border-orange-200">
+                    Accuracy: <span id="accuracy">0</span>%
+                </div>
+                <div id="timer-display" class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-orange-900 font-bold border border-orange-200">
+                    ⏱️ <span id="timer">60</span>s
+                </div>
+            </div>
+
+            <!-- Settings Row -->
+            <div class="flex flex-wrap justify-center gap-4 mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-orange-800 text-sm font-bold">🔊 Sound</span>
+                    <div id="toggle-sound" class="toggle-switch active" onclick="toggleSound()"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-orange-800 text-sm font-bold">🎬 Motion</span>
+                    <div id="toggle-motion" class="toggle-switch active" onclick="toggleMotion()"></div>
+                </div>
+                <button onclick="showLeaderboard()" class="text-sm font-bold text-orange-700 hover:text-orange-900 underline decoration-2 underline-offset-4 transition-colors">
+                    🏆 Leaderboard
+                </button>
+                <button onclick="showSettings()" class="text-sm font-bold text-orange-700 hover:text-orange-900 underline decoration-2 underline-offset-4 transition-colors">
+                    ⚙️ Settings
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="w-full flex-1 flex flex-col items-center">
+            
+            <!-- Instructions (shown before game) -->
+            <div id="instructions" class="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border-2 border-orange-200 mb-4 max-w-md text-center">
+                <p class="text-orange-800 font-bold mb-2">How to Play</p>
+                <p class="text-orange-700 text-sm">Look at each picture and drag it (or tap) to the correct bin. In <strong>"Where is it?"</strong> mode, sort by location. In <strong>"Story vs Real"</strong> mode, decide if it's from the story or real ocean life!</p>
+            </div>
+
+            <!-- Current Tile -->
+            <div id="tile-container" class="mb-4 hidden">
+                <div id="current-tile" class="tile-card bg-white rounded-2xl p-3 shadow-xl border-4 border-orange-300 cursor-grab"
+                     draggable="true">
+                    <img id="tile-image" src="" alt="Current tile" class="tile-image w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] rounded-xl object-contain">
+                </div>
+            </div>
+
+            <!-- Progress / Tiles Sorted -->
+            <p id="progress-text" class="text-orange-800 font-bold mb-4">Tiles sorted: <span id="tiles-sorted">0</span></p>
+
+            <!-- Sort Bins -->
+            <div id="bins-container" class="w-full max-w-2xl grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                <!-- Bins will be injected by JS based on mode -->
+            </div>
+
+            <!-- Practice Mode End Button -->
+            <button id="end-practice-btn" onclick="endGame()" class="hidden bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full shadow-lg mb-4">
+                End Run
+            </button>
+
+            <!-- Restart Button (shown during game) -->
+            <button id="restart-btn" onclick="restartGame()" class="hidden bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full shadow-lg mb-4">
+                Restart
+            </button>
+
+            <!-- Start Button (shown before game starts) -->
+            <button id="start-btn" onclick="startGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-lg transform transition hover:scale-105">
+                Start Game
+            </button>
+
+        </main>
+
+        <!-- Navigation -->
+        <footer class="flex flex-wrap gap-4 justify-center mt-4 pb-4">
+            <a href="https://pitterpatterdiving.com" class="text-sm font-bold text-orange-700 hover:text-orange-900 underline decoration-2 underline-offset-4 transition-colors">
+                Home
+            </a>
+            <a href="index.html" class="text-sm font-bold text-orange-700 hover:text-orange-900 underline decoration-2 underline-offset-4 transition-colors">
+                Game Menu
+            </a>
+            <button onclick="shareGame()" class="text-sm font-bold text-orange-700 hover:text-orange-900 underline decoration-2 underline-offset-4 transition-colors">
+                Share
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border-4 border-orange-300 relative overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="absolute top-0 left-0 w-full h-4 bg-orange-400"></div>
+            <h2 class="text-2xl font-display font-bold text-orange-900 mb-4 mt-4">Leaderboard</h2>
+            
+            <!-- Mode tabs -->
+            <div class="flex gap-2 mb-4">
+                <button onclick="showLeaderboardTab('story')" id="lb-tab-story" class="px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-700">Story vs Real</button>
+                <button onclick="showLeaderboardTab('habitat')" id="lb-tab-habitat" class="px-3 py-1 rounded-full text-sm font-bold bg-amber-100 text-amber-700">Where is it?</button>
+            </div>
+            
+            <div id="leaderboard-content" class="flex-1 overflow-y-auto">
+                <!-- Entries injected by JS -->
+            </div>
+            
+            <button onclick="closeLeaderboard()" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full">Close</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-4 border-orange-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-orange-400"></div>
+            <h2 class="text-2xl font-display font-bold text-orange-900 mb-6 mt-4">Settings</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-orange-800 font-bold">Sound Effects</label>
+                    <div id="settings-toggle-sound" class="toggle-switch" onclick="toggleSettingSound()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-orange-800 font-bold">Haptic Feedback</label>
+                    <div id="settings-toggle-haptic" class="toggle-switch" onclick="toggleSettingHaptic()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-orange-800 font-bold">Reduced Motion</label>
+                    <div id="settings-toggle-motion" class="toggle-switch" onclick="toggleSettingMotion()"></div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-orange-200">
+                <label class="text-orange-800 font-bold block mb-2">Your Name (for leaderboard)</label>
+                <input type="text" id="player-name" class="w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:outline-none focus:border-orange-500" placeholder="Enter your name" maxlength="20">
+            </div>
+            
+            <button onclick="closeSettings()" class="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full">Save & Close</button>
+        </div>
+    </div>
+
+    <!-- End Game Modal -->
+    <div id="end-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-orange-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-orange-400"></div>
+            
+            <h2 class="text-3xl font-display font-bold text-orange-900 mb-2 mt-4">Great Sorting!</h2>
+            <p class="text-orange-600 font-bold text-lg mb-6">You helped organize the sanctuary!</p>
+            
+            <!-- Results Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-orange-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-orange-600 font-bold">Final Score</p>
+                    <p id="final-score" class="text-2xl font-bold text-orange-900">0</p>
+                </div>
+                <div class="bg-orange-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-orange-600 font-bold">Best Streak</p>
+                    <p id="final-streak" class="text-2xl font-bold text-orange-900">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-orange-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-orange-600 font-bold">Accuracy</p>
+                    <p id="final-accuracy" class="text-2xl font-bold text-orange-900">0%</p>
+                </div>
+                <div class="bg-orange-50 p-3 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-orange-600 font-bold">Tiles Sorted</p>
+                    <p id="final-tiles" class="text-2xl font-bold text-orange-900">0</p>
+                </div>
+            </div>
+
+            <div id="new-best" class="text-green-600 font-bold mb-4 hidden">🎉 NEW HIGH SCORE! 🎉</div>
+            
+            <!-- Name Input (shown if default) -->
+            <div id="win-name-input" class="mb-4 hidden">
+                <label class="text-xs uppercase tracking-wider text-orange-600 font-bold block mb-2">Enter Your Name for Leaderboard</label>
+                <input type="text" id="win-player-name" class="w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:outline-none focus:border-orange-500 text-center" placeholder="Your name" maxlength="20">
+            </div>
+            
+            <div id="best-scores" class="bg-orange-50 p-3 rounded-xl mb-6">
+                <p class="text-xs uppercase tracking-wider text-orange-600 font-bold mb-2">Best Scores</p>
+                <p class="text-sm text-orange-800"><span class="font-bold">This Mode:</span> <span id="best-mode-score">0</span></p>
+                <p class="text-sm text-orange-800"><span class="font-bold">Best Streak:</span> <span id="best-mode-streak">0</span></p>
+            </div>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="startGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex-1">
+                    Play Again
+                </button>
+                <button onclick="shareScore()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95">
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // CONFIGURATION - Easy to tune!
+        // ===========================================
+        
+        // Timer length in seconds for Time Attack mode
+        const TIME_ATTACK_DURATION = 60;
+        
+        // Scoring values
+        const SCORE_CORRECT = 10;
+        const SCORE_WRONG = -5;
+        const STREAK_BONUS_THRESHOLD = 5;  // Every N correct in a row
+        const STREAK_BONUS_POINTS = 20;
+        
+        // Feedback timing (ms)
+        const CORRECT_FEEDBACK_DURATION = 400;
+        const WRONG_FEEDBACK_DURATION = 400;
+        const CORRECT_BIN_HIGHLIGHT_DURATION = 400;
+        
+        // ===========================================
+        // TILE DATA - Single source of truth
+        // ===========================================
+        
+        // CONFIG FLAG: Set to true if tile 20 is a photo (Real Ocean), false if stylized (Story World)
+        const TILE_20_IS_PHOTO = false;  // <-- FLIP THIS LINE to change tile 20 classification
+        
+        const TILES = [
+            { id: 1,  src: "img/1.webp",  label: "Mia bed shell",           habitat: "indoors",    story: "story" },
+            { id: 2,  src: "img/2.webp",  label: "Mia reading",             habitat: "indoors",    story: "story" },
+            { id: 3,  src: "img/3.webp",  label: "Pool scene 1",            habitat: "pool",       story: "story" },
+            { id: 4,  src: "img/4.webp",  label: "Pool scene 2",            habitat: "pool",       story: "story" },
+            { id: 5,  src: "img/5.webp",  label: "Ocean surface 1",         habitat: "surface",    story: "story" },
+            { id: 6,  src: "img/6.webp",  label: "Shoreline tidepools",     habitat: "shoreline",  story: "story" },
+            { id: 7,  src: "img/7.webp",  label: "Underwater creature 1",   habitat: "underwater", story: "real" },
+            { id: 8,  src: "img/8.webp",  label: "Underwater creature 2",   habitat: "underwater", story: "real" },
+            { id: 9,  src: "img/9.webp",  label: "Underwater creature 3",   habitat: "underwater", story: "real" },
+            { id: 10, src: "img/10.webp", label: "Indoor scene 3",          habitat: "indoors",    story: "story" },
+            { id: 11, src: "img/11.webp", label: "Indoor scene 4",          habitat: "indoors",    story: "story" },
+            { id: 12, src: "img/12.webp", label: "Underwater creature 4",   habitat: "underwater", story: "real" },
+            { id: 13, src: "img/13.webp", label: "Underwater creature 5",   habitat: "underwater", story: "real" },
+            { id: 14, src: "img/14.webp", label: "Underwater creature 6",   habitat: "underwater", story: "real" },
+            { id: 15, src: "img/15.webp", label: "Underwater creature 7",   habitat: "underwater", story: "real" },
+            { id: 16, src: "img/16.webp", label: "Underwater creature 8",   habitat: "underwater", story: "real" },
+            { id: 17, src: "img/17.webp", label: "Underwater creature 9",   habitat: "underwater", story: "real" },
+            { id: 18, src: "img/18.webp", label: "Underwater creature 10",  habitat: "underwater", story: "real" },
+            { id: 19, src: "img/19.webp", label: "Ocean surface 2",         habitat: "surface",    story: "real" },
+            { id: 20, src: "img/20.webp", label: "Ocean surface 3",         habitat: "surface",    story: TILE_20_IS_PHOTO ? "real" : "story" },
+        ];
+        
+        // ===========================================
+        // BIN DEFINITIONS
+        // ===========================================
+        
+        const HABITAT_BINS = [
+            { id: "indoors",    label: "🏠 Indoors",           color: "bg-amber-100 border-amber-400" },
+            { id: "pool",       label: "🏊 Pool",              color: "bg-cyan-100 border-cyan-400" },
+            { id: "surface",    label: "🌊 Ocean Surface",     color: "bg-blue-100 border-blue-400" },
+            { id: "shoreline",  label: "🐚 Shoreline",         color: "bg-yellow-100 border-yellow-400" },
+            { id: "underwater", label: "🐠 Underwater Ocean",  color: "bg-indigo-100 border-indigo-400" },
+        ];
+        
+        const STORY_BINS = [
+            { id: "story", label: "📖 Story World",  color: "bg-purple-100 border-purple-400" },
+            { id: "real",  label: "🌊 Real Ocean",   color: "bg-teal-100 border-teal-400" },
+        ];
+        
+        // ===========================================
+        // GAME STATE
+        // ===========================================
+        
+        let currentMode = 'story';        // 'habitat' or 'story' - default to story
+        let currentGameType = 'timeattack'; // 'timeattack' or 'practice'
+        let gameActive = false;
+        let deck = [];
+        let currentTileIndex = 0;
+        let currentTile = null;
+        
+        // Stats
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let tilesSorted = 0;
+        
+        // Timer
+        let timeRemaining = TIME_ATTACK_DURATION;
+        let timerInterval = null;
+        
+        // Settings
+        let soundEnabled = true;  // Default sound ON
+        let hapticEnabled = true;
+        let motionEnabled = true;
+        let playerName = 'Player';  // Default player name for leaderboard
+        
+        // Mobile tap state
+        let selectedBinId = null;
+        
+        // Audio context
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        
+        // ===========================================
+        // INITIALIZATION
+        // ===========================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            createBubbles();
+            loadSettings();
+            renderBins();
+            setupDragAndDrop();
+            hideGameElements();
+        });
+        
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for (let i = 0; i < 12; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.width = bubble.style.height = (Math.random() * 30 + 15) + 'px';
+                bubble.style.animationDelay = Math.random() * 15 + 's';
+                bubble.style.animationDuration = (Math.random() * 10 + 12) + 's';
+                container.appendChild(bubble);
+            }
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('sanctuary-sort-settings') || '{}');
+            soundEnabled = settings.sound !== false;  // Default to true
+            hapticEnabled = settings.haptic !== false;
+            motionEnabled = settings.motion !== false;
+            
+            // Load player name
+            playerName = localStorage.getItem('sanctuary-sort-player-name') || 'Player';
+            
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('toggle-motion').classList.toggle('active', motionEnabled);
+            
+            if (!motionEnabled) {
+                document.body.classList.add('reduced-motion');
+            }
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('sanctuary-sort-settings', JSON.stringify({
+                sound: soundEnabled,
+                haptic: hapticEnabled,
+                motion: motionEnabled
+            }));
+        }
+        
+        function hideGameElements() {
+            document.getElementById('tile-container').classList.add('hidden');
+            document.getElementById('bins-container').classList.add('hidden');
+            document.getElementById('progress-text').classList.add('hidden');
+            document.getElementById('end-practice-btn').classList.add('hidden');
+            document.getElementById('restart-btn').classList.add('hidden');
+            // Show mode/game type selectors and instructions
+            document.getElementById('mode-selector').classList.remove('hidden');
+            document.getElementById('btn-timeattack').parentElement.classList.remove('hidden');
+            document.getElementById('instructions').classList.remove('hidden');
+        }
+        
+        function showGameElements() {
+            document.getElementById('tile-container').classList.remove('hidden');
+            document.getElementById('bins-container').classList.remove('hidden');
+            document.getElementById('progress-text').classList.remove('hidden');
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('restart-btn').classList.remove('hidden');
+            // Hide mode/game type selectors and instructions during game
+            document.getElementById('mode-selector').classList.add('hidden');
+            document.getElementById('btn-timeattack').parentElement.classList.add('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+            
+            if (currentGameType === 'practice') {
+                document.getElementById('end-practice-btn').classList.remove('hidden');
+                document.getElementById('timer-display').classList.add('hidden');
+            } else {
+                document.getElementById('end-practice-btn').classList.add('hidden');
+                document.getElementById('timer-display').classList.remove('hidden');
+            }
+        }
+        
+        // ===========================================
+        // MODE & GAME TYPE SELECTION
+        // ===========================================
+        
+        function setMode(mode) {
+            if (gameActive) return;
+            
+            currentMode = mode;
+            
+            // Update button styles
+            document.getElementById('btn-habitat').classList.toggle('active', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('bg-orange-500', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('text-white', mode === 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('bg-orange-200', mode !== 'habitat');
+            document.getElementById('btn-habitat').classList.toggle('text-orange-800', mode !== 'habitat');
+            
+            document.getElementById('btn-story').classList.toggle('active', mode === 'story');
+            document.getElementById('btn-story').classList.toggle('bg-orange-500', mode === 'story');
+            document.getElementById('btn-story').classList.toggle('text-white', mode === 'story');
+            document.getElementById('btn-story').classList.toggle('bg-orange-200', mode !== 'story');
+            document.getElementById('btn-story').classList.toggle('text-orange-800', mode !== 'story');
+            
+            renderBins();
+        }
+        
+        function setGameType(type) {
+            if (gameActive) return;
+            
+            currentGameType = type;
+            
+            // Update button styles
+            document.getElementById('btn-timeattack').classList.toggle('active', type === 'timeattack');
+            document.getElementById('btn-timeattack').classList.toggle('bg-amber-500', type === 'timeattack');
+            document.getElementById('btn-timeattack').classList.toggle('text-white', type === 'timeattack');
+            document.getElementById('btn-timeattack').classList.toggle('bg-amber-200', type !== 'timeattack');
+            document.getElementById('btn-timeattack').classList.toggle('text-amber-800', type !== 'timeattack');
+            
+            document.getElementById('btn-practice').classList.toggle('active', type === 'practice');
+            document.getElementById('btn-practice').classList.toggle('bg-amber-500', type === 'practice');
+            document.getElementById('btn-practice').classList.toggle('text-white', type === 'practice');
+            document.getElementById('btn-practice').classList.toggle('bg-amber-200', type !== 'practice');
+            document.getElementById('btn-practice').classList.toggle('text-amber-800', type !== 'practice');
+            
+            // Show/hide timer
+            document.getElementById('timer-display').classList.toggle('hidden', type === 'practice');
+        }
+        
+        // ===========================================
+        // BIN RENDERING
+        // ===========================================
+        
+        function renderBins() {
+            const container = document.getElementById('bins-container');
+            const bins = currentMode === 'habitat' ? HABITAT_BINS : STORY_BINS;
+            
+            // Adjust grid for story mode (2 bins)
+            if (currentMode === 'story') {
+                container.className = 'w-full max-w-md grid grid-cols-2 gap-4 mb-6';
+            } else {
+                container.className = 'w-full max-w-2xl grid grid-cols-2 md:grid-cols-5 gap-3 mb-6';
+            }
+            
+            container.innerHTML = bins.map(bin => `
+                <div id="bin-${bin.id}" 
+                     class="sort-bin ${bin.color} rounded-xl p-4 border-4 flex flex-col items-center justify-center text-center"
+                     data-bin-id="${bin.id}"
+                     onclick="handleBinClick('${bin.id}')"
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, '${bin.id}')">
+                    <span class="text-2xl mb-1">${bin.label.split(' ')[0]}</span>
+                    <span class="font-bold text-sm">${bin.label.split(' ').slice(1).join(' ')}</span>
+                </div>
+            `).join('');
+        }
+        
+        // ===========================================
+        // GAME FLOW
+        // ===========================================
+        
+        function startGame() {
+            // Save name from win modal if entered
+            const winNameField = document.getElementById('win-player-name');
+            if (winNameField && winNameField.value.trim()) {
+                playerName = winNameField.value.trim();
+                document.getElementById('player-name').value = playerName;
+                saveSettings();
+                // Update the last leaderboard entry with the new name
+                updateLastLeaderboardName(currentMode, playerName);
+            }
+            document.getElementById('win-name-input').classList.add('hidden');
+            
+            // Reset state
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            tilesSorted = 0;
+            timeRemaining = TIME_ATTACK_DURATION;
+            selectedBinId = null;
+            
+            // Shuffle deck
+            deck = shuffleDeck([...TILES]);
+            currentTileIndex = 0;
+            
+            // Update UI
+            updateStats();
+            showGameElements();
+            document.getElementById('end-modal').classList.add('hidden');
+            
+            // Show first tile
+            showNextTile();
+            
+            // Start timer if time attack
+            if (currentGameType === 'timeattack') {
+                startTimer();
+            }
+            
+            gameActive = true;
+            
+            // Initialize audio on first interaction
+            if (!audioCtx && soundEnabled) {
+                audioCtx = new AudioCtx();
+            }
+        }
+        
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('timer').textContent = timeRemaining;
+                
+                if (timeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function endGame() {
+            gameActive = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Save best scores
+            const storageKey = `sanctuary-sort-best-${currentMode}-${currentGameType}`;
+            const streakKey = `sanctuary-sort-streak-${currentMode}`;
+            
+            const prevBest = parseInt(localStorage.getItem(storageKey) || '0');
+            const prevBestStreak = parseInt(localStorage.getItem(streakKey) || '0');
+            
+            const isNewBest = score > prevBest;
+            
+            if (isNewBest) {
+                localStorage.setItem(storageKey, score.toString());
+            }
+            
+            if (bestStreak > prevBestStreak) {
+                localStorage.setItem(streakKey, bestStreak.toString());
+            }
+            
+            // Show modal
+            const accuracy = tilesSorted > 0 ? Math.round((correctCount / tilesSorted) * 100) : 0;
+            
+            // Add to leaderboard (only for time attack mode with meaningful scores)
+            let leaderboardRank = 0;
+            if (currentGameType === 'timeattack' && score > 0) {
+                leaderboardRank = addToLeaderboard(currentMode, playerName, score, accuracy, bestStreak, tilesSorted);
+            }
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-streak').textContent = bestStreak;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            document.getElementById('final-tiles').textContent = tilesSorted;
+            document.getElementById('best-mode-score').textContent = Math.max(score, prevBest);
+            document.getElementById('best-mode-streak').textContent = Math.max(bestStreak, prevBestStreak);
+            
+            // Show new best and leaderboard rank
+            let newBestHtml = '';
+            if (isNewBest) {
+                newBestHtml = '🎉 NEW HIGH SCORE! 🎉';
+                fireConfetti();
+            }
+            if (leaderboardRank > 0 && leaderboardRank <= 10) {
+                newBestHtml += (newBestHtml ? '<br>' : '') + `🏆 #${leaderboardRank} on leaderboard!`;
+            }
+            document.getElementById('new-best').innerHTML = newBestHtml;
+            document.getElementById('new-best').classList.toggle('hidden', !newBestHtml);
+            
+            // Show name input if still default
+            const nameInput = document.getElementById('win-name-input');
+            const winNameField = document.getElementById('win-player-name');
+            if (playerName === 'Player') {
+                nameInput.classList.remove('hidden');
+                winNameField.value = '';
+                setTimeout(() => winNameField.focus(), 100);
+            } else {
+                nameInput.classList.add('hidden');
+            }
+            
+            document.getElementById('end-modal').classList.remove('hidden');
+            
+            // Reset UI - return to start condition with mode selection available
+            hideGameElements();
+            document.getElementById('start-btn').classList.remove('hidden');
+        }
+        
+        function restartGame() {
+            // Stop current game and return to start condition
+            gameActive = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Reset stats display
+            score = 0;
+            streak = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            tilesSorted = 0;
+            timeRemaining = TIME_ATTACK_DURATION;
+            updateStats();
+            document.getElementById('timer').textContent = TIME_ATTACK_DURATION;
+            
+            // Return to start condition
+            hideGameElements();
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('end-modal').classList.add('hidden');
+        }
+        
+        // ===========================================
+        // TILE MANAGEMENT
+        // ===========================================
+        
+        function shuffleDeck(array) {
+            // Fisher-Yates shuffle
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function showNextTile() {
+            // If deck is empty, reshuffle (for time attack continuous play)
+            if (currentTileIndex >= deck.length) {
+                if (currentGameType === 'timeattack') {
+                    deck = shuffleDeck([...TILES]);
+                    currentTileIndex = 0;
+                } else {
+                    // Practice mode - end when all tiles done
+                    endGame();
+                    return;
+                }
+            }
+            
+            currentTile = deck[currentTileIndex];
+            
+            const tileImage = document.getElementById('tile-image');
+            const tileCard = document.getElementById('current-tile');
+            
+            // Reset tile appearance
+            tileCard.classList.remove('tile-correct', 'tile-wrong');
+            tileCard.style.opacity = '1';
+            tileCard.style.transform = '';
+            
+            tileImage.src = currentTile.src;
+            // Don't show tile label - let player figure it out from the image!
+            
+            // Update progress text
+            if (currentGameType === 'practice') {
+                document.getElementById('progress-text').innerHTML = `Tile <span id="tiles-sorted">${currentTileIndex + 1}</span> / 20`;
+            } else {
+                document.getElementById('progress-text').innerHTML = `Tiles sorted: <span id="tiles-sorted">${tilesSorted}</span>`;
+            }
+            
+            // Clear bin selection
+            clearBinSelection();
+        }
+        
+        // ===========================================
+        // SORTING LOGIC - Single submit function
+        // ===========================================
+        
+        function submitSort(binId) {
+            if (!gameActive || !currentTile) return;
+            
+            const correctAnswer = currentMode === 'habitat' ? currentTile.habitat : currentTile.story;
+            const isCorrect = binId === correctAnswer;
+            
+            tilesSorted++;
+            
+            if (isCorrect) {
+                handleCorrect(binId);
+            } else {
+                handleWrong(binId, correctAnswer);
+            }
+            
+            updateStats();
+        }
+        
+        function handleCorrect(binId) {
+            correctCount++;
+            score += SCORE_CORRECT;
+            streak++;
+            
+            // Streak bonus with celebration
+            let gotBonus = false;
+            if (streak > 0 && streak % STREAK_BONUS_THRESHOLD === 0) {
+                score += STREAK_BONUS_POINTS;
+                gotBonus = true;
+            }
+            
+            if (streak > bestStreak) {
+                bestStreak = streak;
+            }
+            
+            // Visual feedback
+            const tileCard = document.getElementById('current-tile');
+            const bin = document.getElementById(`bin-${binId}`);
+            
+            if (motionEnabled) {
+                tileCard.classList.add('tile-correct');
+                bin.classList.add('correct-highlight');
+                createSparkles(tileCard);
+                animateMascot('happy');
+                
+                // Streak bonus celebration
+                if (gotBonus) {
+                    showStreakBonus();
+                }
+            }
+            
+            // Sound
+            if (soundEnabled) playSound('correct');
+            
+            // Haptic
+            triggerHaptic('light');
+            
+            // Next tile after animation
+            setTimeout(() => {
+                bin.classList.remove('correct-highlight');
+                currentTileIndex++;
+                showNextTile();
+            }, CORRECT_FEEDBACK_DURATION);
+        }
+        
+        function showStreakBonus() {
+            const bonusText = document.createElement('div');
+            bonusText.className = 'streak-bonus-text';
+            bonusText.textContent = `🔥 +${STREAK_BONUS_POINTS} BONUS! 🔥`;
+            document.body.appendChild(bonusText);
+            
+            // Also animate the streak counter
+            const streakEl = document.getElementById('streak').parentElement;
+            streakEl.classList.add('streak-bonus-pop');
+            
+            setTimeout(() => {
+                bonusText.remove();
+                streakEl.classList.remove('streak-bonus-pop');
+            }, 1000);
+        }
+        
+        function handleWrong(binId, correctAnswer) {
+            wrongCount++;
+            score = Math.max(0, score + SCORE_WRONG);
+            streak = 0;
+            
+            // Visual feedback
+            const tileCard = document.getElementById('current-tile');
+            const wrongBin = document.getElementById(`bin-${binId}`);
+            const correctBin = document.getElementById(`bin-${correctAnswer}`);
+            
+            if (motionEnabled) {
+                tileCard.classList.add('tile-wrong');
+                wrongBin.classList.add('wrong-highlight');
+                animateMascot('sad');
+            }
+            
+            // Sound
+            if (soundEnabled) playSound('wrong');
+            
+            // Haptic
+            triggerHaptic('heavy');
+            
+            // Show correct bin prominently after brief delay
+            setTimeout(() => {
+                wrongBin.classList.remove('wrong-highlight');
+                if (correctBin) {
+                    correctBin.classList.add('correct-highlight');
+                    // In practice mode, show longer and add text hint
+                    if (currentGameType === 'practice') {
+                        correctBin.setAttribute('data-hint', '✓ Correct bin!');
+                    }
+                }
+            }, WRONG_FEEDBACK_DURATION);
+            
+            // Longer delay in practice mode to learn from mistakes
+            const extraDelay = currentGameType === 'practice' ? 400 : 0;
+            
+            // Next tile
+            setTimeout(() => {
+                if (correctBin) {
+                    correctBin.classList.remove('correct-highlight');
+                    correctBin.removeAttribute('data-hint');
+                }
+                tileCard.classList.remove('tile-wrong');
+                currentTileIndex++;
+                showNextTile();
+            }, WRONG_FEEDBACK_DURATION + CORRECT_BIN_HIGHLIGHT_DURATION + extraDelay);
+        }
+        
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+            
+            const accuracy = tilesSorted > 0 ? Math.round((correctCount / tilesSorted) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy;
+        }
+        
+        // ===========================================
+        // INPUT HANDLING - Desktop Drag & Drop
+        // ===========================================
+        
+        function setupDragAndDrop() {
+            const tileCard = document.getElementById('current-tile');
+            
+            tileCard.addEventListener('dragstart', (e) => {
+                if (!gameActive) {
+                    e.preventDefault();
+                    return;
+                }
+                tileCard.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            tileCard.addEventListener('dragend', () => {
+                tileCard.classList.remove('dragging');
+            });
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+        
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e, binId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            submitSort(binId);
+        }
+        
+        // ===========================================
+        // INPUT HANDLING - Mobile Tap
+        // ===========================================
+        
+        function handleBinClick(binId) {
+            if (!gameActive) return;
+            
+            // On mobile/touch or if tile is tapped first, submit directly
+            // For simplicity, clicking a bin always submits
+            submitSort(binId);
+        }
+        
+        function clearBinSelection() {
+            selectedBinId = null;
+            document.querySelectorAll('.sort-bin').forEach(bin => {
+                bin.classList.remove('selected');
+            });
+        }
+        
+        // ===========================================
+        // VISUAL EFFECTS
+        // ===========================================
+        
+        function createSparkles(element) {
+            if (!motionEnabled) return;
+            
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 8; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = centerX + (Math.random() - 0.5) * 100 + 'px';
+                sparkle.style.top = centerY + (Math.random() - 0.5) * 100 + 'px';
+                document.body.appendChild(sparkle);
+                
+                setTimeout(() => sparkle.remove(), 600);
+            }
+        }
+        
+        function animateMascot(type) {
+            const mascot = document.getElementById('mascot');
+            if (!mascot || !motionEnabled) return;
+            
+            mascot.classList.remove('happy', 'sad');
+            void mascot.offsetWidth; // Trigger reflow
+            mascot.classList.add(type);
+            
+            setTimeout(() => {
+                mascot.classList.remove(type);
+            }, 500);
+        }
+        
+        // ===========================================
+        // AUDIO
+        // ===========================================
+        
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.15, now);
+            
+            if (type === 'correct') {
+                // Happy pop sound
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.1);
+                osc.frequency.setValueAtTime(784, now + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else {
+                // Wrong blip
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+        
+        // ===========================================
+        // SETTINGS TOGGLES
+        // ===========================================
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('settings-toggle-sound').classList.toggle('active', soundEnabled);
+            saveSettings();
+            
+            // Initialize audio context on first enable
+            if (soundEnabled && !audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+        
+        function toggleMotion() {
+            motionEnabled = !motionEnabled;
+            document.getElementById('toggle-motion').classList.toggle('active', motionEnabled);
+            document.getElementById('settings-toggle-motion').classList.toggle('active', !motionEnabled);
+            document.body.classList.toggle('reduced-motion', !motionEnabled);
+            saveSettings();
+        }
+        
+        // Settings modal toggle functions
+        function toggleSettingSound() {
+            toggleSound();
+        }
+        
+        function toggleSettingHaptic() {
+            toggleHaptic();
+        }
+        
+        function toggleSettingMotion() {
+            toggleMotion();
+        }
+        
+        function toggleHaptic() {
+            hapticEnabled = !hapticEnabled;
+            document.getElementById('settings-toggle-haptic').classList.toggle('active', hapticEnabled);
+            saveSettings();
+        }
+        
+        function triggerHaptic(type) {
+            if (!hapticEnabled) return;
+            
+            if ('vibrate' in navigator) {
+                if (type === 'light') {
+                    navigator.vibrate(10);
+                } else if (type === 'heavy') {
+                    navigator.vibrate([30, 20, 30]);
+                }
+            }
+        }
+        
+        function fireConfetti() {
+            if (!motionEnabled) return;
+            const container = document.body;
+            const colors = ['#f97316', '#fb923c', '#fbbf24', '#34d399'];
+            
+            for(let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: ${Math.random() * 10 + 5}px;
+                    height: ${Math.random() * 10 + 5}px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    left: ${Math.random() * 100}%;
+                    top: -20px;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                    animation: confetti-fall 3s ease-out forwards;
+                `;
+                container.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+        
+        function showSettings() {
+            // Sync toggle states
+            document.getElementById('settings-toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('settings-toggle-haptic').classList.toggle('active', hapticEnabled);
+            document.getElementById('settings-toggle-motion').classList.toggle('active', !motionEnabled);
+            document.getElementById('player-name').value = playerName;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        
+        function closeSettings() {
+            // Save player name
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (nameInput) {
+                playerName = nameInput;
+                localStorage.setItem('sanctuary-sort-player-name', playerName);
+            }
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        
+        // ===========================================
+        // LEADERBOARD
+        // ===========================================
+        
+        function getLeaderboardKey(mode) {
+            return `sanctuary-sort-leaderboard-${mode}`;
+        }
+        
+        function getLeaderboard(mode) {
+            const key = getLeaderboardKey(mode);
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        let lastLeaderboardDate = null;
+        
+        function addToLeaderboard(mode, name, scoreVal, accuracyVal, streakVal, tileCount) {
+            const leaderboard = getLeaderboard(mode);
+            lastLeaderboardDate = Date.now();
+            leaderboard.push({ 
+                name, 
+                score: scoreVal, 
+                accuracy: accuracyVal, 
+                streak: streakVal, 
+                tiles: tileCount,
+                date: lastLeaderboardDate 
+            });
+            // Sort by score (highest first)
+            leaderboard.sort((a, b) => b.score - a.score);
+            const top10 = leaderboard.slice(0, 10);
+            localStorage.setItem(getLeaderboardKey(mode), JSON.stringify(top10));
+            return top10.findIndex(e => e.date === lastLeaderboardDate) + 1;
+        }
+        
+        function updateLastLeaderboardName(mode, newName) {
+            if (!lastLeaderboardDate) return;
+            const leaderboard = getLeaderboard(mode);
+            const entry = leaderboard.find(e => e.date === lastLeaderboardDate);
+            if (entry) {
+                entry.name = newName;
+                localStorage.setItem(getLeaderboardKey(mode), JSON.stringify(leaderboard));
+            }
+        }
+        
+        function showLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.remove('hidden');
+            showLeaderboardTab(currentMode);
+        }
+        
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.add('hidden');
+        }
+        
+        function showLeaderboardTab(mode) {
+            ['story', 'habitat'].forEach(m => {
+                document.getElementById(`lb-tab-${m}`).classList.toggle('ring-2', m === mode);
+                document.getElementById(`lb-tab-${m}`).classList.toggle('ring-orange-500', m === mode);
+            });
+            
+            const leaderboard = getLeaderboard(mode);
+            const content = document.getElementById('leaderboard-content');
+            
+            if (leaderboard.length === 0) {
+                content.innerHTML = '<p class="text-center text-orange-600 py-8">No scores yet! Be the first to play.</p>';
+                return;
+            }
+            
+            let html = '<div class="space-y-1">';
+            leaderboard.forEach((entry, i) => {
+                const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                html += `
+                    <div class="leaderboard-entry ${medal}">
+                        <span class="font-bold text-orange-800">${rankIcon}</span>
+                        <span class="font-bold text-orange-900 truncate">${entry.name}</span>
+                        <span class="text-orange-700 text-sm">${entry.score} pts</span>
+                        <span class="text-orange-700 text-sm">${entry.accuracy}%</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        }
+        
+        // ===========================================
+        // SHARING
+        // ===========================================
+        
+        const booksUrl = 'https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK';
+        
+        function shareGame() {
+            const gameUrl = window.location.href.split('?')[0];
+            const text = `🐙 Mia Kingtide's Sanctuary Sort 🐙\nSort ocean creatures into their habitats!\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Sanctuary Sort", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+        
+        function shareScore() {
+            const gameUrl = window.location.href.split('?')[0];
+            const modeLabel = currentMode === 'habitat' ? 'Where is it?' : 'Story vs Real';
+            const accuracy = tilesSorted > 0 ? Math.round((correctCount / tilesSorted) * 100) : 0;
+            
+            const text = `🐙 Mia Kingtide's Sanctuary Sort 🐙\n${modeLabel} Mode\n🎯 Score: ${score} | 🔥 Best Streak: ${bestStreak}\n📊 Accuracy: ${accuracy}%\nCan you beat my score?\n${gameUrl}\n\n📚 Explore the Mia Kingtide books: ${booksUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: "Sanctuary Sort Score", text, url: gameUrl });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Score copied to clipboard!');
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

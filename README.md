@@ -1,10 +1,10 @@
 # Mia Kingtide's Ocean Games 🐙
 
-A collection of beautiful ocean-themed games featuring characters from the Mia Kingtide book series. Includes Memory Match and Speed Match games with engaging animations and gameplay.
+A collection of beautiful ocean-themed games featuring characters from the Mia Kingtide book series. Includes Memory Match, Speed Match, and Sanctuary Sort games with engaging animations and gameplay.
 
 ## 🎮 Games
 
-### Ocean Memory Match (`index.html`)
+### Ocean Memory Match (`oceanmatch.html`)
 A classic memory matching game with 3D card animations, multiple difficulty levels, and engaging gameplay features.
 
 ### Ocean Speed Match (`speedmatch.html`)
@@ -13,6 +13,31 @@ A fast-paced reaction game where you quickly decide if two cards show the same o
 - **Streak Bonuses**: Build combos for higher scores
 - **Accuracy Tracking**: See how well you performed
 - **Best Score Persistence**: Beat your high score
+
+### Sanctuary Sort (`sanctuarysort.html`)
+A sorting/classification game where you sort ocean creatures into category bins. Features:
+- **Two Modes**: "Where is it?" (5 habitat bins) and "Story vs Real" (2 bins)
+- **Time Attack**: 60-second countdown with continuous play
+- **Practice Mode**: Sort all 20 tiles at your own pace
+- **Streak Bonuses**: Every 5 correct answers earns bonus points with celebration
+- **Confetti Celebration**: Animated confetti on new high scores
+- **Drag & Drop**: Desktop drag-and-drop or mobile tap-to-sort
+- **Visual Feedback**: Animations for correct/wrong answers
+- **How to Play Tutorial**: Instructions shown before game starts
+
+### Ocean Focus (`oceanfocus.html`)
+A tap-the-target game where you find and tap the correct creature as fast as possible. Features:
+- **Two Modes**: "Find Creature" (tap specific animals) and "Find Habitat" (tap pictures by category)
+- **60-Second Time Attack**: Race against the clock
+- **3-2-1 Countdown**: Build anticipation before each game
+- **Progressive Difficulty**: Grid grows from 12 to 16 to 20 pictures as you score
+- **Level Up Notifications**: Visual feedback when grid expands
+- **Streak Celebrations**: Every 5-streak triggers a bonus animation
+- **Timer Penalty Display**: See "-1s" when you tap wrong
+- **Correct Tile Hints**: Wrong taps briefly highlight the correct answer
+- **How to Play Tutorial**: Instructions shown before game starts
+- **Mobile-First**: Large touch targets, haptic feedback support
+- **Leaderboard**: Top 10 scores per mode
 
 ## 🎮 Features
 
@@ -42,10 +67,11 @@ A fast-paced reaction game where you quickly decide if two cards show the same o
 - **Keyboard Navigation**: Full keyboard accessibility support
 - **Responsive Design**: Works on desktop, tablet, and mobile
 
-### Accessibility
-- **Reduced Motion**: Toggle for users sensitive to animations
-- **High Contrast**: Improved visibility option
-- **Sound Toggle**: Mute/unmute sound effects
+### Accessibility & Settings (All Games)
+- **Sound Effects Toggle**: Mute/unmute audio feedback
+- **Haptic Feedback Toggle**: Enable/disable vibration on mobile
+- **Reduced Motion Toggle**: Disable animations for accessibility
+- **High Contrast**: Improved visibility option (Memory Match)
 - **Keyboard Support**: Arrow keys and Enter/Space for gameplay
 - **Screen Reader**: ARIA labels and semantic HTML
 
@@ -59,9 +85,12 @@ A fast-paced reaction game where you quickly decide if two cards show the same o
 ### File Structure
 ```
 oceanmatch/
-├── index.html          # Memory Match game
-├── index.htm           # Memory Match (alternate extension)
+├── index.html          # Game menu (landing page)
+├── index.htm           # Game menu (alternate extension)
+├── oceanmatch.html     # Memory Match game
 ├── speedmatch.html     # Speed Match game
+├── sanctuarysort.html  # Sanctuary Sort game
+├── oceanfocus.html     # Ocean Focus game
 ├── manifest.json       # PWA manifest
 ├── .htaccess           # Apache configuration
 ├── img/                # Ocean creature images

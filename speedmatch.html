@@ -192,6 +192,21 @@
             100% { transform: scale(0.8); opacity: 0; }
         }
 
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .game-card, .countdown-number, .confetti {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        .reduced-motion .game-card,
+        .reduced-motion .countdown-number,
+        .reduced-motion .confetti {
+            animation: none !important;
+            transition: transform 0.1s !important;
+        }
+
         /* Confetti */
         .confetti {
             position: absolute;
@@ -212,6 +227,44 @@
                 transition: none !important;
             }
         }
+
+        /* Leaderboard modal */
+        .leaderboard-entry {
+            display: grid;
+            grid-template-columns: 30px 1fr 60px 60px;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            align-items: center;
+        }
+        .leaderboard-entry:nth-child(odd) { background: rgba(16, 185, 129, 0.1); }
+        .leaderboard-entry.gold { background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), transparent); }
+        .leaderboard-entry.silver { background: linear-gradient(90deg, rgba(156, 163, 175, 0.3), transparent); }
+        .leaderboard-entry.bronze { background: linear-gradient(90deg, rgba(180, 83, 9, 0.2), transparent); }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-switch.active { background: #10b981; }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .toggle-switch.active::after { transform: translateX(20px); }
     </style>
 </head>
 <body class="overflow-x-hidden relative">
@@ -289,10 +342,16 @@
                 Home
             </a>
             <a href="index.html" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
-                Memory Match
+                Game Menu
             </a>
             <button onclick="startGame()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
                 Restart
+            </button>
+            <button onclick="showLeaderboard()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                🏆 Leaderboard
+            </button>
+            <button onclick="showSettings()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
+                ⚙️ Settings
             </button>
             <button onclick="shareGame()" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-2 underline-offset-4 transition-colors">
                 Share
@@ -308,6 +367,50 @@
     <!-- Countdown Overlay -->
     <div id="countdown-overlay" class="countdown-overlay hidden">
         <div id="countdown-number" class="countdown-number">3</div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border-4 border-emerald-300 relative overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="absolute top-0 left-0 w-full h-4 bg-emerald-400"></div>
+            <h2 class="text-2xl font-display font-bold text-emerald-900 mb-4 mt-4">Leaderboard</h2>
+            
+            <div id="leaderboard-content" class="flex-1 overflow-y-auto">
+                <!-- Entries injected by JS -->
+            </div>
+            
+            <button onclick="closeLeaderboard()" class="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-full">Close</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-4 border-emerald-300 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-emerald-400"></div>
+            <h2 class="text-2xl font-display font-bold text-emerald-900 mb-6 mt-4">Settings</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-emerald-800 font-bold">Sound Effects</label>
+                    <div id="toggle-sound" class="toggle-switch active" onclick="toggleSound()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-emerald-800 font-bold">Haptic Feedback</label>
+                    <div id="toggle-haptic" class="toggle-switch active" onclick="toggleHaptic()"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-emerald-800 font-bold">Reduced Motion</label>
+                    <div id="toggle-motion" class="toggle-switch" onclick="toggleMotion()"></div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-emerald-200">
+                <label class="text-emerald-800 font-bold block mb-2">Your Name (for leaderboard)</label>
+                <input type="text" id="player-name" class="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500" placeholder="Enter your name" maxlength="20">
+            </div>
+            
+            <button onclick="closeSettings()" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-full">Save & Close</button>
+        </div>
     </div>
 
     <!-- Game Over Modal -->
@@ -336,6 +439,12 @@
             </div>
 
             <div id="new-best" class="text-green-600 font-bold mb-4 hidden">🎉 NEW HIGH SCORE! 🎉</div>
+            
+            <!-- Name Input (shown if default) -->
+            <div id="win-name-input" class="mb-4 hidden">
+                <label class="text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-2">Enter Your Name for Leaderboard</label>
+                <input type="text" id="win-player-name" class="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-center" placeholder="Your name" maxlength="20">
+            </div>
             
             <div class="flex gap-3 justify-center">
                 <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex-1">
@@ -372,6 +481,10 @@
         let timerInterval = null;
         let timeRemaining = CONFIG.baseTime;
         let gameActive = false;
+        let soundEnabled = true;
+        let hapticEnabled = true;
+        let motionEnabled = true;
+        let playerName = 'Player';
 
         // --- Sound Effects ---
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -382,7 +495,7 @@
         }
 
         function playSound(type) {
-            if (!audioCtx) return;
+            if (!audioCtx || !soundEnabled) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -541,6 +654,7 @@
 
             if (isCorrect) {
                 playSound('correct');
+                triggerHaptic('light');
                 streak++;
                 bestStreak = Math.max(bestStreak, streak);
                 correctAnswers++;
@@ -555,6 +669,7 @@
                 setTimeout(() => streakEl.classList.remove('streak-pop'), 300);
             } else {
                 playSound('wrong');
+                triggerHaptic('heavy');
                 streak = 0;
                 score = Math.max(0, score - CONFIG.wrongPenalty);
             }
@@ -587,6 +702,17 @@
         }
 
         function startGame() {
+            // Save name from win modal if entered
+            const winNameField = document.getElementById('win-player-name');
+            if (winNameField && winNameField.value.trim()) {
+                playerName = winNameField.value.trim();
+                document.getElementById('player-name').value = playerName;
+                saveSettings();
+                // Update the last leaderboard entry with the new name
+                updateLastLeaderboardName(playerName);
+            }
+            document.getElementById('win-name-input').classList.add('hidden');
+            
             initAudio();
             
             // Reset state
@@ -646,7 +772,34 @@
                 : 0;
             document.getElementById('final-accuracy').textContent = `${accuracy}%`;
 
-            document.getElementById('new-best').classList.toggle('hidden', !isNewBest);
+            // Add to leaderboard
+            let leaderboardRank = 0;
+            if (score > 0) {
+                leaderboardRank = addToLeaderboard(playerName, score, accuracy, bestStreak);
+            }
+
+            // Show new best and leaderboard rank
+            let newBestHtml = '';
+            if (isNewBest) {
+                newBestHtml = '🎉 NEW HIGH SCORE! 🎉';
+            }
+            if (leaderboardRank > 0 && leaderboardRank <= 10) {
+                newBestHtml += (newBestHtml ? '<br>' : '') + `🏆 #${leaderboardRank} on leaderboard!`;
+            }
+            document.getElementById('new-best').innerHTML = newBestHtml;
+            document.getElementById('new-best').classList.toggle('hidden', !newBestHtml);
+            
+            // Show name input if still default
+            const nameInput = document.getElementById('win-name-input');
+            const winNameField = document.getElementById('win-player-name');
+            if (playerName === 'Player') {
+                nameInput.classList.remove('hidden');
+                winNameField.value = '';
+                setTimeout(() => winNameField.focus(), 100);
+            } else {
+                nameInput.classList.add('hidden');
+            }
+            
             document.getElementById('gameover-modal').classList.remove('hidden');
 
             if (isNewBest) {
@@ -678,6 +831,137 @@
             } else {
                 display.classList.add('hidden');
             }
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('speedmatch-settings') || '{}');
+            soundEnabled = settings.sound !== false;
+            hapticEnabled = settings.haptic !== false;
+            motionEnabled = settings.motion !== false;
+            playerName = localStorage.getItem('speedmatch-player-name') || 'Player';
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.body.classList.toggle('reduced-motion', !motionEnabled);
+        }
+
+        function saveSettings() {
+            localStorage.setItem('speedmatch-settings', JSON.stringify({ sound: soundEnabled, haptic: hapticEnabled, motion: motionEnabled }));
+        }
+
+        // --- Settings ---
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            saveSettings();
+            if (soundEnabled && !audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function toggleMotion() {
+            motionEnabled = !motionEnabled;
+            document.getElementById('toggle-motion').classList.toggle('active', !motionEnabled);
+            document.body.classList.toggle('reduced-motion', !motionEnabled);
+            saveSettings();
+        }
+
+        function toggleHaptic() {
+            hapticEnabled = !hapticEnabled;
+            document.getElementById('toggle-haptic').classList.toggle('active', hapticEnabled);
+            saveSettings();
+        }
+
+        function triggerHaptic(type) {
+            if (!hapticEnabled) return;
+            
+            if ('vibrate' in navigator) {
+                if (type === 'light') {
+                    navigator.vibrate(10);
+                } else if (type === 'heavy') {
+                    navigator.vibrate([30, 20, 30]);
+                }
+            }
+        }
+
+        function showSettings() {
+            document.getElementById('toggle-sound').classList.toggle('active', soundEnabled);
+            document.getElementById('toggle-haptic').classList.toggle('active', hapticEnabled);
+            document.getElementById('toggle-motion').classList.toggle('active', !motionEnabled);
+            document.getElementById('player-name').value = playerName;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (nameInput) {
+                playerName = nameInput;
+                localStorage.setItem('speedmatch-player-name', playerName);
+            }
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        // --- Leaderboard ---
+        let lastLeaderboardDate = null;
+
+        function getLeaderboard() {
+            const data = localStorage.getItem('speedmatch-leaderboard');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function addToLeaderboard(name, scoreVal, accuracyVal, streakVal) {
+            const leaderboard = getLeaderboard();
+            lastLeaderboardDate = Date.now();
+            leaderboard.push({ 
+                name, 
+                score: scoreVal, 
+                accuracy: accuracyVal, 
+                streak: streakVal,
+                date: lastLeaderboardDate 
+            });
+            leaderboard.sort((a, b) => b.score - a.score);
+            const top10 = leaderboard.slice(0, 10);
+            localStorage.setItem('speedmatch-leaderboard', JSON.stringify(top10));
+            return top10.findIndex(e => e.date === lastLeaderboardDate) + 1;
+        }
+
+        function updateLastLeaderboardName(newName) {
+            if (!lastLeaderboardDate) return;
+            const leaderboard = getLeaderboard();
+            const entry = leaderboard.find(e => e.date === lastLeaderboardDate);
+            if (entry) {
+                entry.name = newName;
+                localStorage.setItem('speedmatch-leaderboard', JSON.stringify(leaderboard));
+            }
+        }
+
+        function showLeaderboard() {
+            const leaderboard = getLeaderboard();
+            const content = document.getElementById('leaderboard-content');
+            
+            if (leaderboard.length === 0) {
+                content.innerHTML = '<p class="text-center text-emerald-600 py-8">No scores yet! Be the first to play.</p>';
+            } else {
+                let html = '<div class="space-y-1">';
+                leaderboard.forEach((entry, i) => {
+                    const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                    const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                    html += `
+                        <div class="leaderboard-entry ${medal}">
+                            <span class="font-bold text-emerald-800">${rankIcon}</span>
+                            <span class="font-bold text-emerald-900 truncate">${entry.name}</span>
+                            <span class="text-emerald-700 text-sm">${entry.score} pts</span>
+                            <span class="text-emerald-700 text-sm">${entry.accuracy}%</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            }
+            
+            document.getElementById('leaderboard-modal').classList.remove('hidden');
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.add('hidden');
         }
 
         // --- Share Functions ---
@@ -762,6 +1046,7 @@
         // --- Initialize ---
         window.onload = () => {
             createBubbles();
+            loadSettings();
             loadBestScore();
             startGame();
         };
