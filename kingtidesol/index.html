@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingtide Solitaire: Baker's Dozen - Download for Windows</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../img/Octopus.svg">
+    
+    <!-- Apple Touch Icon (for iOS homescreen) -->
+    <link rel="apple-touch-icon" href="../img/Octopus.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #fdf4ff 0%, #e879f9 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .download-btn {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            background-color: rgba(255, 255, 255, 0.4);
+            animation: rise 15s infinite ease-in;
+            bottom: -100px;
+        }
+
+        @keyframes rise {
+            0% { bottom: -100px; transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { bottom: 100vh; transform: translateX(-200px); }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden relative">
+
+    <!-- Background Bubbles -->
+    <div id="bubbles-container" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+    <div class="container mx-auto px-4 py-8 md:py-12 max-w-2xl flex flex-col items-center min-h-screen">
+        
+        <!-- Header -->
+        <header class="text-center mb-8 w-full">
+            <a href="../index.html" class="text-fuchsia-600 hover:text-fuchsia-800 text-sm font-bold mb-4 inline-block">&larr; Back to Games</a>
+            <h1 class="text-4xl md:text-5xl font-bold text-fuchsia-900 mb-3 drop-shadow-sm">
+                Kingtide Solitaire: Baker's Dozen
+            </h1>
+            <p class="text-fuchsia-700 text-lg">A beautiful ocean-themed Baker's Dozen solitaire game for Windows</p>
+        </header>
+
+        <!-- Main Card -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-4 border-fuchsia-300 w-full max-w-lg text-center mb-8">
+            
+            <!-- Icon -->
+            <div class="w-32 h-32 mx-auto mb-6 bg-fuchsia-100 rounded-full flex items-center justify-center">
+                <span class="text-7xl">🃏</span>
+            </div>
+            
+            <h2 class="text-2xl font-display font-bold text-fuchsia-900 mb-4">Download for Windows</h2>
+            
+            <p class="text-fuchsia-700 mb-6">
+                Enjoy classic Baker's Dozen solitaire with beautiful ocean-themed artwork featuring characters from the Mia Kingtide book series!
+            </p>
+
+            <!-- Features -->
+            <div class="flex flex-wrap gap-2 justify-center mb-6">
+                <span class="bg-fuchsia-100 text-fuchsia-700 text-xs font-bold px-3 py-1 rounded-full">Baker's Dozen</span>
+                <span class="bg-fuchsia-100 text-fuchsia-700 text-xs font-bold px-3 py-1 rounded-full">Ocean Artwork</span>
+                <span class="bg-fuchsia-100 text-fuchsia-700 text-xs font-bold px-3 py-1 rounded-full">Windows App</span>
+            </div>
+
+            <!-- Download Button -->
+            <a href="KingtideSolitaire-Windows.zip" 
+               download
+               class="download-btn inline-block bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg mb-4">
+                ⬇️ Download for Windows
+            </a>
+            
+            <p class="text-fuchsia-500 text-sm">~14.5 MB • Windows 10/11</p>
+        </div>
+
+        <!-- Installation Instructions -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-fuchsia-200 w-full max-w-lg mb-8">
+            <h3 class="text-lg font-display font-bold text-fuchsia-900 mb-3">📋 Installation Instructions</h3>
+            <ol class="text-left text-fuchsia-800 space-y-2 text-sm">
+                <li><strong>1.</strong> Click the download button above</li>
+                <li><strong>2.</strong> Extract the ZIP file to a folder</li>
+                <li><strong>3.</strong> Double-click <code class="bg-fuchsia-100 px-1 rounded">KingtideSolitaire.exe</code> to play</li>
+                <li><strong>4.</strong> If Windows SmartScreen appears, click "More info" then "Run anyway"</li>
+            </ol>
+        </div>
+
+        <!-- Footer Links -->
+        <div class="flex flex-wrap gap-4 justify-center mt-auto pb-8">
+            <a href="../index.html" class="text-sm font-bold text-fuchsia-700 hover:text-fuchsia-900 underline decoration-2 underline-offset-4 transition-colors">
+                🎮 More Games
+            </a>
+            <a href="https://www.amazon.com/stores/Luke-Kilpatrick/author/B0DNBNF2ZK" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="text-sm font-bold text-fuchsia-700 hover:text-fuchsia-900 underline decoration-2 underline-offset-4 transition-colors">
+                📚 Mia Kingtide Books
+            </a>
+            <a href="https://pitterpatterdiving.com" class="text-sm font-bold text-fuchsia-700 hover:text-fuchsia-900 underline decoration-2 underline-offset-4 transition-colors">
+                🏠 Home
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        // Create background bubbles
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for (let i = 0; i < 12; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.width = bubble.style.height = (Math.random() * 40 + 20) + 'px';
+                bubble.style.animationDelay = Math.random() * 15 + 's';
+                bubble.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(bubble);
+            }
+        }
+        createBubbles();
+    </script>
+
+</body>
+</html>

@@ -25,6 +25,12 @@ A sorting/classification game where you sort ocean creatures into category bins.
 - **Visual Feedback**: Animations for correct/wrong answers
 - **How to Play Tutorial**: Instructions shown before game starts
 
+### Kingtide Solitaire (`kingtidesol/`)
+A classic Klondike solitaire game with beautiful ocean-themed artwork featuring Mia Kingtide characters. Available as a **free Windows download**.
+- **Classic Klondike**: Traditional solitaire gameplay
+- **Ocean Artwork**: Cards featuring characters from the book series
+- **Windows App**: Standalone desktop application
+
 ### Ocean Focus (`oceanfocus.html`)
 A tap-the-target game where you find and tap the correct creature as fast as possible. Features:
 - **Two Modes**: "Find Creature" (tap specific animals) and "Find Habitat" (tap pictures by category)
@@ -91,6 +97,9 @@ oceanmatch/
 ├── speedmatch.html     # Speed Match game
 ├── sanctuarysort.html  # Sanctuary Sort game
 ├── oceanfocus.html     # Ocean Focus game
+├── kingtidesol/        # Kingtide Solitaire
+│   ├── index.html      # Download landing page
+│   └── KingtideSolitaire-Windows.zip
 ├── manifest.json       # PWA manifest
 ├── .htaccess           # Apache configuration
 ├── img/                # Ocean creature images
